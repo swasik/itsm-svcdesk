@@ -1,0 +1,44 @@
+# ai-generated: 100% - Claude Code (Fable 5.1) wrote this file from design/LAB1.md sections 1.8 and 7.4; the lecturer ran it
+# Compose contract (LAB1.md section 1.8): service `svcdesk` on 8080 with the test clock on, no bind mounts,
+# a `tests` service under the `tests` profile that runs the suite against SVCDESK_URL.
+#
+#   SVCDESK_PORT=18080 docker compose up --build --wait svcdesk      # publish on another host port
+#   SVCDESK_C1=business docker compose up --wait svcdesk              # switch a resolution (see README.md)
+#   docker compose --profile tests run --rm tests                     # own tests (Stretch S3)
+
+services:
+  svcdesk:
+    build: .
+    ports:
+      - "${SVCDESK_PORT:-8080}:8080"
+    environment:
+      SVCDESK_TEST_CLOCK: "1"
+      SVCDESK_C1: ${SVCDESK_C1:-wallclock}
+      SVCDESK_C2: ${SVCDESK_C2:-immutable}
+      SVCDESK_C3: ${SVCDESK_C3:-vip}
+      SVCDESK_DB: /data/svcdesk.db
+    volumes:
+      - svcdesk-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-m", "svcdesk.healthcheck"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 3s
+
+  tests:
+    build: .
+    profiles: ["tests"]
+    depends_on:
+      svcdesk:
+        condition: service_healthy
+    environment:
+      SVCDESK_URL: ${SVCDESK_URL:-http://svcdesk:8080}
+      # the suite expects the combination the service runs; keep these in step with the svcdesk service
+      SVCDESK_C1: ${SVCDESK_C1:-wallclock}
+      SVCDESK_C2: ${SVCDESK_C2:-immutable}
+      SVCDESK_C3: ${SVCDESK_C3:-vip}
+    command: ["python", "tests/run_tests.py"]
+
+volumes:
+  svcdesk-data:
