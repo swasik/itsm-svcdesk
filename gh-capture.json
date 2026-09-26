@@ -1,0 +1,7 @@
+This capture stands in for `gh api` output and is not a real capture: the counts below are
+invented. A real one would page through the receipted submission issues of
+swasik/itsm-2026-submissions, count each as a deployment, and count every later attempt at
+the same lab (lab<N>/v2 onwards) as rework.
+
+deployments=184
+rework_deployments=23

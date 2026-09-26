@@ -16,8 +16,10 @@ from . import __version__
 from .clock import parse_instant, real_now
 from .config import Settings
 from .db import Database
+from .dora import DoraError, compute, parse_instant as parse_dora_instant
 from .models import TicketCreate
 from .service import ACTIONS, ApiError, TicketService
+from .ticketevents import ticket_events
 
 CLOCK_HEADER = "x-test-clock"
 
@@ -116,6 +118,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/tickets/{ticket_id}/sla")
     def get_sla(ticket_id: str, now: datetime = Depends(request_now)) -> dict:
         return service.sla_view(ticket_id, now)
+
+    @app.post("/dora/metrics")
+    async def dora_metrics(request: Request) -> dict:
+        """The five delivery metrics of a supplied event log (design/LAB2.md 4.1).
+
+        Stateless: a pure function of the request body, so two identical requests answer identically and
+        no ordering between requests exists. Every malformed input is a 400 with a top-level `error`.
+        """
+        try:
+            body = await request.json()
+        except ValueError as exc:
+            raise ApiError(400, "invalid_json", f"request body is not JSON: {exc}") from exc
+        if not isinstance(body, dict):
+            raise ApiError(400, "invalid_request", "request body must be a JSON object")
+        window = body.get("window")
+        if not isinstance(window, dict):
+            raise ApiError(400, "invalid_window", "window: expected an object with `from` and `to`")
+        try:
+            window_from = parse_dora_instant(window.get("from"), "window.from")
+            window_to = parse_dora_instant(window.get("to"), "window.to")
+            return compute(body.get("events"), window_from, window_to)
+        except DoraError as exc:
+            raise ApiError(400, "invalid_event_log", str(exc)) from exc
+
+    @app.get("/dora/ticket-events")
+    def dora_ticket_events() -> list[dict]:
+        return ticket_events(service.list(None, None))
 
     def _register_action(action: str) -> None:
         @app.post(f"/tickets/{{ticket_id}}/{action}", name=action)
