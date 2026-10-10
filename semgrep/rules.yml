@@ -1,0 +1,32 @@
+# ai-generated: 100% - Claude Code wrote both rules for decisions svcdesk relies on (CI-SPEC.md P-31)
+rules:
+  - id: svcdesk-sql-text-from-fstring
+    languages: [python]
+    severity: WARNING
+    message: >-
+      SQL text built with an f-string reaches sqlite3 execute(). In svcdesk only constant column lists and fixed
+      WHERE fragments may be interpolated; every value must be a bound `?` parameter. Review this line.
+    metadata:
+      cwe: ["CWE-89: Improper Neutralization of Special Elements used in an SQL Command"]
+    patterns:
+      - pattern-either:
+          - pattern: $CONN.execute(f"...", ...)
+          - pattern: $CONN.executemany(f"...", ...)
+          - pattern: |
+              $Q = f"..."
+              ...
+              $CONN.execute($Q, ...)
+  - id: svcdesk-env-read-outside-settings
+    languages: [python]
+    severity: INFO
+    message: >-
+      Configuration read from the process environment outside Settings.from_env. svcdesk validates every setting
+      in one place (config.py); a direct os.environ / os.getenv read bypasses that validation and its defaults.
+    patterns:
+      - pattern-either:
+          - pattern: os.environ.get(...)
+          - pattern: os.environ[$KEY]
+          - pattern: os.getenv(...)
+      - pattern-not-inside: |
+          def from_env(...):
+              ...
