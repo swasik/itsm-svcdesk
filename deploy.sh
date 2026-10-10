@@ -520,8 +520,7 @@ run_phase() {
 rollback() {   # rollback <reason>
   local reason=$1
   if [[ $RELEASE_STRATEGY == flag ]]; then
-    set_flag_percent 0 || log "WARNING: could not switch the flag off"
-    record_action closed-loop "set flag $FLAG_NAME to 0 % (roll back: every search on 2.0.0's path)"
+    change_flag 0 "roll back: every search on 2.0.0's path" || log "WARNING: flagd does not confirm the flag off"
   fi
   set_weights 100 0 "${SHADOW_W[@]}" || set_weights 100 0 "${SHADOW_W[@]}" || die "could not roll back the weights"
   record_action closed-loop "set weights 100/0 (roll back: the stable build serves every request)"
@@ -530,8 +529,7 @@ rollback() {   # rollback <reason>
 
 promote() {    # promote <reason>
   if [[ $RELEASE_STRATEGY == flag ]]; then
-    set_flag_percent 100 || rollback "could not switch the flag on for everyone"
-    record_action closed-loop "set flag $FLAG_NAME to 100 % (promote)"
+    change_flag 100 "promote" || rollback "flagd does not serve the flag on for everyone"
   else
     set_weights 0 100 "${SHADOW_W[@]}" || rollback "could not set the promotion weights"
     record_action closed-loop "set weights 0/100 (promote: the candidate serves every request)"
@@ -559,12 +557,41 @@ set_flag_percent() {
   log "flag $FLAG_NAME on for $p % of searches"
 }
 
+# Postmortem action (Lab 4, "Record every runtime flag change as a change"): every flag change is an action of the
+# record with its before and after, and is confirmed by reading the flag back from flagd itself (OFREP, 40
+# evaluations with random keys) - the incident's flags changed with nobody recording or checking them, and flagd
+# ignores a file it cannot read without saying so. A change flagd does not serve is a failed change.
+FLAG_NOW=unknown
+flag_readback() {   # flag_readback -> "<on> <of>" from 40 OFREP evaluations
+  local args=() i
+  for i in $(seq 1 40); do
+    (( i > 1 )) && args+=(--next)
+    args+=(-sS --max-time 2 -X POST -H "Content-Type: application/json"
+      -d "{\"context\": {\"targetingKey\": \"deploy-$RANDOM-$i\"}}" "http://flagd:8016/ofrep/v1/evaluate/flags/$FLAG_NAME")
+  done
+  stack_curl "${args[@]}" 2>/dev/null | jq -s -r '[.[] | select(.value != null)] | "\([.[] | select(.value == true)] | length) \(length)"'
+}
+change_flag() {     # change_flag <percent> <why>
+  local p=$1 why=$2 rb on of i ok=0
+  set_flag_percent "$p" || return 1
+  record_action closed-loop "flag $FLAG_NAME: $FLAG_NOW % -> $p % ($why)"
+  for i in $(seq 1 8); do
+    sleep 1
+    rb=$(flag_readback) || rb="0 0"; read -r on of <<<"$rb"
+    if (( of >= 30 )); then
+      if (( p == 0 && on == 0 )) || (( p == 100 && on == of )) || (( p > 0 && p < 100 && on > 0 && on < of )); then ok=1; break; fi
+      (( p > 0 && p < 100 && i >= 4 && of >= 30 )) && { ok=1; break; }     # a small share may show no "on" in 40
+    fi
+  done
+  record_action read-only "read flag $FLAG_NAME back from flagd: $on of $of evaluations on (asked for $p %)"
+  (( ok )) || { log "flagd does not serve $p % (readback $on/$of)"; return 1; }
+  FLAG_NOW=$p
+}
+
 # --- the release ------------------------------------------------------------------------------------------------------
 if [[ $RELEASE_STRATEGY == flag ]]; then
   # Dark first: the flag off for everyone, then the candidate behind all the weights (it runs 2.0.0's path).
-  set_flag_percent 0 || die "could not switch the flag off"
-  record_action closed-loop "set flag $FLAG_NAME to 0 % (dark) before the candidate starts"
-  sleep 2
+  change_flag 0 "dark, before the candidate starts" || die "flagd does not serve the flag off: the candidate would not be dark"
 fi
 
 set_weights 100 0 "${SHADOW_W[@]}" || die "could not set the starting weights"
@@ -580,8 +607,7 @@ if [[ $RELEASE_STRATEGY == flag ]]; then
   mapfile -t flag_d < <(yq '.lab6_deploy.flag.steps[].min_duration' "$CONFIG_FILE")
   (( ${#FLAG_P[@]} > 0 )) || rollback "flag run without flag.steps in $CONFIG_FILE"
   for i in "${!FLAG_P[@]}"; do
-    set_flag_percent "${FLAG_P[$i]}" || rollback "could not set the flag to ${FLAG_P[$i]} %"
-    record_action closed-loop "set flag $FLAG_NAME to ${FLAG_P[$i]} %"
+    change_flag "${FLAG_P[$i]}" "step $((i + 1))" || rollback "flagd does not serve the flag at ${FLAG_P[$i]} %"
     run_phase "flag ${FLAG_P[$i]} %" flag "${FLAG_P[$i]}" "$(dur_seconds "${flag_d[$i]}")" "$MIN_REQUESTS" || rollback "$REASON"
     log "$REASON"
   done
