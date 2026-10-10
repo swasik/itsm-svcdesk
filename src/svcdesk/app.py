@@ -9,7 +9,7 @@ from datetime import datetime
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import __version__
@@ -17,6 +17,8 @@ from .clock import parse_instant, real_now
 from .config import Settings
 from .db import Database
 from .dora import DoraError, compute, parse_instant as parse_dora_instant
+from .kb import KbClient
+from .metrics import MetricsMiddleware, exposition
 from .models import TicketCreate
 from .service import ACTIONS, ApiError, TicketService
 from .ticketevents import ticket_events
@@ -49,10 +51,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = Settings.from_env() if settings is None else settings
     db = Database(settings.db_path)
     service = TicketService(settings, db)
+    kb = KbClient(settings.kb_index_url)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
+        await kb.close()
         db.close()
 
     app = FastAPI(
@@ -67,6 +71,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.db = db
     app.state.service = service
+    app.state.kb = kb
+    app.add_middleware(MetricsMiddleware)
 
     @app.exception_handler(ApiError)
     async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
@@ -102,6 +108,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "resolutions": settings.resolutions,
             "test_clock": settings.test_clock,
         }
+
+    @app.get("/metrics", include_in_schema=False)
+    def metrics() -> Response:
+        body, content_type = exposition()
+        return Response(content=body, media_type=content_type)
+
+    @app.get("/kb/search")
+    async def kb_search(q: str | None = None) -> dict:
+        """Knowledge-base search through the kb-index dependency (design/LAB3.md M-02)."""
+        return await kb.search(q)
 
     @app.post("/tickets", status_code=201)
     def create_ticket(body: TicketCreate, now: datetime = Depends(request_now)) -> dict:

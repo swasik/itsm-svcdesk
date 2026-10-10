@@ -1,0 +1,10 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) wrote this file; the lecturer reviews it
+apiVersion: 1
+providers:
+  - name: svcdesk
+    folder: svcdesk
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

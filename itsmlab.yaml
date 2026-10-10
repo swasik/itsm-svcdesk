@@ -1,9 +1,10 @@
 # itsmlab.yaml - read by the checker (itsmlab) and by the wrappers itsmlab.sh / itsmlab.ps1.
-lab: 2                                   # the lab this repository is currently submitting
-baselines: {lab1: student}               # from Lab 2 on: per earlier lab, "student" (no checkpoint tag is published).
+lab: 3                                   # the lab this repository is currently submitting
+baselines: {lab1: student, lab2: student} # from Lab 2 on: per earlier lab, "student" (no checkpoint tag is published).
                                          # Lab 6 also accepts "checkpoint", whose files ship in the Lab 6 package:
                                          # {lab3: student|checkpoint, lab4: student|checkpoint}
 repository: swasik/itsm-svcdesk        # your public GitHub repository, e.g. "jkowalski/itsm-svcdesk"
+login: itsm-reference                    # the kb-index profile (Lab 3): this repository's ladder is designed for it
 submissions_repo: swasik/itsm-2026-submissions
 checker_image: ghcr.io/swasik/itsmlab:2026  # the course tag: leave it; a checker update is `docker pull` of this tag
                                             # (the grader alone pins a digest and records it in every grade)

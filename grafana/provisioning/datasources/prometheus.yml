@@ -1,0 +1,12 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) wrote this file; the lecturer reviews it
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 5s

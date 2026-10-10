@@ -1,0 +1,98 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) wrote this file from design/LAB3.md section 3.7; the lecturer reviews it
+# Unit tests for alerts.yml (promtool test rules alerts_test.yml). Every test puts at least one window's worth of
+# healthy history before the burn, so the windows are full and the firing times are the ones the rules imply:
+# at a burn b > B the long window reaches B after long_window x B / b, then `for` runs.
+# Test 1 and 3 pin the first minute each alert fires (they kill `for` +/- 5m and threshold x 1.5); tests 2 and 4
+# burn just below the threshold for a long time (they kill threshold / 1.5); test 5 shows the short window
+# ending a fast-burn page within minutes of the burn stopping.
+rule_files:
+  - alerts.yml
+evaluation_interval: 1m
+
+tests:
+  # 1. fast burn at 1.2 x 14.4 (17.28 % slow) after 70 healthy minutes: the 1h window crosses 14.4 % at 120m,
+  #    pending then, firing after `for: 2m`
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{job="svcdesk", http_route="/kb/search"}'
+        values: '0+600x200'
+      - series: 'http_server_request_duration_seconds_bucket{job="svcdesk", http_route="/kb/search", le="0.3"}'
+        values: '0+600x70 42496.32+496.32x129'
+    alert_rule_test:
+      - eval_time: 121m
+        alertname: KbSearchLatencyBurnFast
+        exp_alerts: []
+      - eval_time: 122m
+        alertname: KbSearchLatencyBurnFast
+        exp_alerts:
+          - exp_labels: {service: svcdesk, slo: latency, severity: P1}
+            exp_annotations:
+              summary: "/kb/search is spending its latency error budget 14.4 times too fast"
+              description: "Over the last hour and the last 5 minutes more than 14.4 % of /kb/search requests took longer than 0.3 s."
+
+  # 2. fast burn at 0.8 x 14.4 (11.52 % slow) for almost four hours: never a page
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{job="svcdesk", http_route="/kb/search"}'
+        values: '0+600x240'
+      - series: 'http_server_request_duration_seconds_bucket{job="svcdesk", http_route="/kb/search", le="0.3"}'
+        values: '0+600x70 42530.88+530.88x169'
+    alert_rule_test:
+      - eval_time: 240m
+        alertname: KbSearchLatencyBurnFast
+        exp_alerts: []
+
+  # 3. slow burn at 1.2 x 6 (7.2 % slow) after 370 healthy minutes: the 6h window crosses 6 % at 670m,
+  #    firing after `for: 5m`; the fast alert stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{job="svcdesk", http_route="/kb/search"}'
+        values: '0+600x800'
+      - series: 'http_server_request_duration_seconds_bucket{job="svcdesk", http_route="/kb/search", le="0.3"}'
+        values: '0+600x370 222556.8+556.8x429'
+    alert_rule_test:
+      - eval_time: 674m
+        alertname: KbSearchLatencyBurnSlow
+        exp_alerts: []
+      - eval_time: 675m
+        alertname: KbSearchLatencyBurnSlow
+        exp_alerts:
+          - exp_labels: {service: svcdesk, slo: latency, severity: P2}
+            exp_annotations:
+              summary: "/kb/search is spending its latency error budget 6 times too fast"
+              description: "Over the last 6 hours and the last 30 minutes more than 6 % of /kb/search requests took longer than 0.3 s."
+      - eval_time: 675m
+        alertname: KbSearchLatencyBurnFast
+        exp_alerts: []
+
+  # 4. slow burn at 0.8 x 6 (4.8 % slow) for over seven hours: never fires
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{job="svcdesk", http_route="/kb/search"}'
+        values: '0+600x800'
+      - series: 'http_server_request_duration_seconds_bucket{job="svcdesk", http_route="/kb/search", le="0.3"}'
+        values: '0+600x370 222571.2+571.2x429'
+    alert_rule_test:
+      - eval_time: 800m
+        alertname: KbSearchLatencyBurnSlow
+        exp_alerts: []
+
+  # 5. a burn at 3 x 14.4 from 70m to 130m, then healthy again: firing by 92m, and resolved at 133m because the
+  #    5-minute window drops below 14.4 % within three minutes - the 1h window alone would keep it firing ~30 min
+  - interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{job="svcdesk", http_route="/kb/search"}'
+        values: '0+600x200'
+      - series: 'http_server_request_duration_seconds_bucket{job="svcdesk", http_route="/kb/search", le="0.3"}'
+        values: '0+600x70 42340.8+340.8x59 63048+600x69'
+    alert_rule_test:
+      - eval_time: 132m
+        alertname: KbSearchLatencyBurnFast
+        exp_alerts:
+          - exp_labels: {service: svcdesk, slo: latency, severity: P1}
+            exp_annotations:
+              summary: "/kb/search is spending its latency error budget 14.4 times too fast"
+              description: "Over the last hour and the last 5 minutes more than 14.4 % of /kb/search requests took longer than 0.3 s."
+      - eval_time: 133m
+        alertname: KbSearchLatencyBurnFast
+        exp_alerts: []

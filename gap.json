@@ -1,0 +1,7 @@
+{
+  "toxic": {"type": "latency", "latency": 50, "jitter": 10},
+  "client_p99_seconds": 0.287,
+  "server_p99_seconds": 0.235,
+  "gap_seconds": 0.052,
+  "measured": "twice, 30 s open-loop at 40 requests/s each, 27 September 2026: gaps of 48.8 and 54.4 ms"
+}

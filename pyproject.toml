@@ -15,6 +15,7 @@ dependencies = [
     "uvicorn==0.52.4",
     "tzdata>=2025.1",
     "httpx==0.28.1",
+    "prometheus-client==0.26.0",
 ]
 
 [project.optional-dependencies]

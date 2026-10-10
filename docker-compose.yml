@@ -1,10 +1,13 @@
 # ai-generated: 100% - Claude Code (Fable 5.1) wrote this file from design/LAB1.md sections 1.8 and 7.4; the lecturer ran it
 # Compose contract (LAB1.md section 1.8): service `svcdesk` on 8080 with the test clock on, no bind mounts,
 # a `tests` service under the `tests` profile that runs the suite against SVCDESK_URL.
+# Lab 3 (LAB3.md sections 2 and 4): the `kb-index` dependency, and the local Prometheus and Grafana under the
+# `observability` profile, their configuration baked in by their Dockerfiles (no bind mounts, so Labs 1-2's rule holds).
 #
 #   SVCDESK_PORT=18080 docker compose up --build --wait svcdesk      # publish on another host port
 #   SVCDESK_C1=business docker compose up --wait svcdesk              # switch a resolution (see README.md)
 #   docker compose --profile tests run --rm tests                     # own tests (Stretch S3)
+#   docker compose --profile observability up -d --build             # Prometheus on 9090, Grafana on 3000
 
 services:
   svcdesk:
@@ -17,6 +20,7 @@ services:
       SVCDESK_C2: ${SVCDESK_C2:-immutable}
       SVCDESK_C3: ${SVCDESK_C3:-vip}
       SVCDESK_DB: /data/svcdesk.db
+      KB_INDEX_URL: http://kb-index:8080
     volumes:
       - svcdesk-data:/data
     healthcheck:
@@ -25,6 +29,26 @@ services:
       timeout: 3s
       retries: 30
       start_period: 3s
+
+  kb-index:
+    image: ghcr.io/swasik/seeded-toxic:2026
+    environment:
+      SEEDED_TOXIC_LOGIN: itsm-reference     # your GitHub login in your repository
+
+  prometheus:
+    build: ./prometheus
+    profiles: ["observability"]
+    ports:
+      - "9090:9090"
+
+  grafana:
+    build: ./grafana
+    profiles: ["observability"]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
 
   tests:
     build: .

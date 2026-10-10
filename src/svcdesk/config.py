@@ -1,5 +1,6 @@
 # ai-generated: 100% - Claude Code (Fable 5.1) wrote this file from design/LAB1.md section 7.4; the lecturer ran the tests
-"""Runtime settings: the three contradiction resolutions, the test clock switch, and the database path.
+"""Runtime settings: the three contradiction resolutions, the test clock switch, the database path and the
+kb-index URL (Lab 3).
 
 Every value comes from an environment variable so that the same image exhibits any of the eight
 resolution combinations (LAB1.md section 2 and 7.4) without a rebuild.
@@ -29,6 +30,7 @@ class Settings:
     c3: str = DEFAULTS["C3"]
     test_clock: bool = False
     db_path: str = "/data/svcdesk.db"
+    kb_index_url: str = "http://kb-index:8080"
 
     def __post_init__(self) -> None:
         for key, value in (("C1", self.c1), ("C2", self.c2), ("C3", self.c3)):
@@ -46,6 +48,7 @@ class Settings:
             c3=env.get("SVCDESK_C3", DEFAULTS["C3"]).strip().lower(),
             test_clock=env.get("SVCDESK_TEST_CLOCK", "0").strip().lower() in TRUE_VALUES,
             db_path=env.get("SVCDESK_DB", "/data/svcdesk.db"),
+            kb_index_url=env.get("KB_INDEX_URL", "http://kb-index:8080"),
         )
 
     @property
