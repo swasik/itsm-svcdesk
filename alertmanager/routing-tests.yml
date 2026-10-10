@@ -1,0 +1,34 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) acting as the student wrote these cases from its own rules and routing tree
+# alertmanager/routing-tests.yml - the cases that prove the routing tree (INCIDENT-SPEC.md I-06 to I-08).
+routes:
+  - labels: {alertname: CheckoutErrorRate, service: checkout, severity: P1, system: shop}
+    receivers: [pager]
+  - labels: {alertname: CheckoutLatencyHigh, service: checkout, severity: P1, system: shop}
+    receivers: [pager]
+  - labels: {alertname: FrontendErrorRate, service: frontend, severity: P2, system: shop}
+    receivers: [chat]
+  - labels: {alertname: ServiceErrorsRaised, service: backend, severity: P3, system: shop}
+    receivers: [chat]
+  - labels: {alertname: KbSearchLatencyBurnFast, service: svcdesk, slo: latency, severity: P1}
+    receivers: [pager]
+  - labels: {alertname: KbSearchLatencyBurnSlow, service: svcdesk, slo: latency, severity: P2}
+    receivers: [chat]
+  - labels: {alertname: SomethingUnlabelled, service: shop}
+    receivers: [chat]
+inhibitions:
+  # the shop's page mutes the shop's warning ...
+  - source: {alertname: CheckoutErrorRate, service: checkout, severity: P1, system: shop}
+    target: {alertname: FrontendErrorRate, service: frontend, severity: P2, system: shop}
+    inhibited: true
+  # ... and not the same warning of another system: the pair of I-08, differing only in `system`
+  - source: {alertname: CheckoutErrorRate, service: checkout, severity: P1, system: shop}
+    target: {alertname: FrontendErrorRate, service: frontend, severity: P2, system: svcdesk}
+    inhibited: false
+  # a page never mutes another page
+  - source: {alertname: CheckoutErrorRate, service: checkout, severity: P1, system: shop}
+    target: {alertname: CheckoutLatencyHigh, service: checkout, severity: P1, system: shop}
+    inhibited: false
+  # svcdesk's page carries no `system: shop`, so it mutes nothing
+  - source: {alertname: KbSearchLatencyBurnFast, service: svcdesk, slo: latency, severity: P1}
+    target: {alertname: KbSearchLatencyBurnSlow, service: svcdesk, slo: latency, severity: P2}
+    inhibited: false

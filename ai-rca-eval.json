@@ -1,0 +1,50 @@
+{
+  "investigator": {
+    "agent": "course agent loop agent.py",
+    "model": "qwen3:1.7b",
+    "mcp_server": "prom_mcp.py (mcp 2.2.0)",
+    "transcript": "ai-rca/transcript.md"
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "The \"ServiceLatencyRaised\" alert is likely caused by high latency in the \"shipping\" service, as indicated by the \"span_kind=latency\" and \"status_code=ERROR\" labels in the metrics.",
+      "component": "shipping",
+      "predicts": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"shipping\", span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 1000 unless on() sum(rate(traces_span_metrics_calls_total{service_name=\"shipping\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) > 0",
+      "at": "2026-10-10T23:12:00Z",
+      "result": true,
+      "verdict": "partially_correct",
+      "evidence": "Shipping's SERVER p95 over 5 minutes was 2600 ms at 23:12:00 (185 ms on the healthy shop, nothing above 1000 ms at the baseline instant 23:02:36), so the latency half holds. The mechanism the agent gave does not: shipping has no STATUS_CODE_ERROR series at all in the snapshot (the `unless` half returns nothing), and span_kind has no value `latency`. Right component, wrong mechanism: the slowness is real, the errors are invented."
+    },
+    {
+      "id": "H2",
+      "hypothesis": "The \"CheckoutErrorRate\" alert suggests a failure in the \"checkout\" service, possibly due to errors in trace spans with \"span_kind=error\" and \"status_code=ERROR\".",
+      "component": "checkout",
+      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0.05",
+      "at": "2026-10-10T23:12:00Z",
+      "result": true,
+      "verdict": "correct",
+      "evidence": "16 % of checkout's SERVER spans (PlaceOrder) failed over the 5 minutes to 23:12:00; nothing at 23:02:36, when checkout had no failed span at all. The failure in checkout is real. The label value it cites (span_kind=error) does not exist - the failures carry span_kind=SPAN_KIND_SERVER - but the claim is about the failure, and the data confirms it. It restates the alert's name, so it localises the symptom, not the cause."
+    },
+    {
+      "id": "H3",
+      "hypothesis": "The \"FrontendErrorRate\" alert indicates errors in the \"frontend\" service, likely from trace spans with \"span_kind=error\" and \"status_code=ERROR\".",
+      "component": "frontend",
+      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"frontend\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"frontend\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0.01",
+      "at": "2026-10-10T23:12:00Z",
+      "result": true,
+      "verdict": "correct",
+      "evidence": "7.5 % of the frontend's SERVER spans failed over the 5 minutes to 23:12:00 (GET /api/products/[productId], GET /api/recommendations, POST /api/checkout); nothing at 23:02:36. Correct, and again the alert's own statement."
+    },
+    {
+      "id": "H4",
+      "hypothesis": "The \"ServiceErrorsRaised\" alert points to errors in the \"product-catalog\" service, possibly from trace spans with \"span_kind=error\" and \"status_code=ERROR\".",
+      "component": "product-catalog",
+      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"product-catalog\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"product-catalog\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0.01",
+      "at": "2026-10-10T23:12:00Z",
+      "result": true,
+      "verdict": "correct",
+      "evidence": "7.3 % of product-catalog's SERVER spans failed over the 5 minutes to 23:12:00, all of them GetProduct (38 failed calls between 23:07 and 23:12); nothing at 23:02:36. This is the closest the agent came to a cause: product-catalog's GetProduct failures are what failed orders and product pages."
+    }
+  ]
+}

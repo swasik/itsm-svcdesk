@@ -1,0 +1,98 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) acting as the student wrote these rules from INCIDENT-SPEC.md 2.2 and the baseline it measured
+# prometheus/demo-alerts.yml - symptom alerts on the shop (INCIDENT-SPEC.md I-01, I-02, I-05).
+#
+# Design:
+#   - P1 pages on what a shopper feels at checkout: orders failing (CheckoutErrorRate) and orders slow
+#     (CheckoutLatencyHigh). Every fault of the pool fails or slows checkout, so one of the two pages on every draw.
+#   - P2 / P3 go to chat: the frontend as the shopper sees it, and cause-side signals (payment, product-catalog,
+#     shipping, email, recommendation, ad) that help the on-call localise, never page.
+#   - Only SERVER spans (what a service answered its callers); windows of 5 minutes (one OTLP sample a minute).
+#   - Every rule carries `system: shop`, the label the inhibit rule of alertmanager.yml compares with `equal`.
+#   - `for: 1m` on the pages: one more sample confirms the symptom; it costs a minute of MTTD. No keep_firing_for.
+#   - Thresholds sit well above the healthy baseline measured on the playground before arming (see the comments).
+groups:
+  - name: shop-symptoms
+    rules:
+      # Orders failing. Baseline: no checkout SERVER errors.
+      - alert: CheckoutErrorRate
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{service_name="checkout", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_span_metrics_calls_total{service_name="checkout", span_kind="SPAN_KIND_SERVER"}[5m]))
+          > 0.05
+        for: 1m
+        labels:
+          service: checkout
+          severity: P1
+          system: shop
+        annotations:
+          summary: "More than 5 % of checkout requests failed over the last 5 minutes"
+
+      # Orders slow. PlaceOrder p95 over 5 minutes.
+      - alert: CheckoutLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name="checkout", span_kind="SPAN_KIND_SERVER", span_name="oteldemo.CheckoutService/PlaceOrder"}[5m])))
+          > 3000
+        for: 1m
+        labels:
+          service: checkout
+          severity: P1
+          system: shop
+        annotations:
+          summary: "The slowest 5 % of orders take more than 3 s (PlaceOrder p95, 5 minutes)"
+
+      # What the shopper sees on every page: the frontend's own errors (to chat).
+      - alert: FrontendErrorRate
+        expr: |
+          sum(rate(traces_span_metrics_calls_total{service_name="frontend", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_span_metrics_calls_total{service_name="frontend", span_kind="SPAN_KIND_SERVER"}[5m]))
+          > 0.05
+        for: 1m
+        labels:
+          service: frontend
+          severity: P2
+          system: shop
+        annotations:
+          summary: "More than 5 % of frontend requests failed over the last 5 minutes"
+
+      - alert: FrontendLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name="frontend", span_kind="SPAN_KIND_SERVER"}[5m])))
+          > 2000
+        for: 1m
+        labels:
+          service: frontend
+          severity: P2
+          system: shop
+        annotations:
+          summary: "The frontend's p95 is above 2 s over the last 5 minutes"
+
+  - name: shop-causes
+    rules:
+      # Cause-side signals for the on-call's dashboard and chat: they localise a fault, they never page.
+      - alert: ServiceErrorsRaised
+        expr: |
+          sum by (service_name) (rate(traces_span_metrics_calls_total{service_name=~"payment|product-catalog|shipping|email|recommendation|ad|cart|currency|quote", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum by (service_name) (rate(traces_span_metrics_calls_total{service_name=~"payment|product-catalog|shipping|email|recommendation|ad|cart|currency|quote", span_kind="SPAN_KIND_SERVER"}[5m]))
+          > 0.05
+        for: 1m
+        labels:
+          service: backend
+          severity: P3
+          system: shop
+        annotations:
+          summary: "{{ $labels.service_name }}: more than 5 % of its SERVER spans failed over 5 minutes"
+
+      - alert: ServiceLatencyRaised
+        expr: |
+          histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=~"payment|product-catalog|shipping|email|recommendation|ad|cart|currency|quote", span_kind="SPAN_KIND_SERVER"}[5m])))
+          > 1000
+        for: 1m
+        labels:
+          service: backend
+          severity: P3
+          system: shop
+        annotations:
+          summary: "{{ $labels.service_name }}: p95 of its SERVER spans above 1 s over 5 minutes"

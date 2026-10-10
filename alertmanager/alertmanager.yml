@@ -1,0 +1,34 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) acting as the student wrote the routes and the inhibit rule from INCIDENT-SPEC.md 4.1
+# alertmanager/alertmanager.yml - the routing tree (INCIDENT-SPEC.md I-04 to I-08).
+#
+#   P1 -> pager (the on-call's phone); P2 and P3 -> chat; anything else falls to the root, chat.
+#   While a P1 page on the shop fires, the shop's P2/P3 alerts are muted in chat (they are the same incident seen
+#   from further away); `equal: [system]` keeps a shop page from muting svcdesk's or another system's warnings.
+global:
+  resolve_timeout: 5m
+route:
+  receiver: chat                  # the root: anything that matches no child ends here, never the pager
+  group_by: [alertname, service]
+  group_wait: 10s                 # the first notification of a new group waits this long: part of the MTTA
+  group_interval: 1m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="P1"']
+      receiver: pager
+    - matchers: ['severity=~"P2|P3"']
+      receiver: chat
+receivers:
+  - name: pager                   # the on-call's phone: http://localhost:18091 shows what reached it
+    webhook_configs:
+      - url: http://pager:8080/hook/pager
+        send_resolved: true
+  - name: chat
+    webhook_configs:
+      - url: http://pager:8080/hook/chat
+        send_resolved: true
+inhibit_rules:
+  # A shop page mutes the shop's own warnings, and only the same system's (`system` is a static label of every rule
+  # in demo-alerts.yml).
+  - source_matchers: ['severity="P1"', 'system="shop"']
+    target_matchers: ['severity=~"P2|P3"']
+    equal: [system]
