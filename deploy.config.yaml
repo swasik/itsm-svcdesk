@@ -1,0 +1,27 @@
+# ai-generated: 30% - the course's example; I chose the burn rates, the plan and the shadow and flag steps, an AI assistant checked the arithmetic
+# deploy.config.yaml - the plan and the thresholds of my release (RELEASE-SPEC.md R-07 to R-11).
+# Baseline: my own Lab 3 slo.md (itsmlab.yaml baselines.lab3: student): 28d, availability 0.995, latency 0.99
+# within 0.3 s. Its four numbers are copied below exactly; the gate's thresholds are burn rates of them.
+lab6_deploy:
+  slo:                                 # equal to my Lab 3 slo.md (R-08, R-09)
+    window: 28d
+    availability: {objective: 0.995}
+    latency: {objective: 0.99, threshold_seconds: 0.3}
+  gate:
+    availability: {max_burn_rate: 10}  # a step fails when the canary's 5xx share exceeds 10 x 0.005 = 5 %
+    latency: {max_burn_rate: 10}       # ... or its share slower than 0.3 s exceeds 10 x 0.01 = 10 %
+    min_requests: 150                  # canary searches a step must have seen before it may pass
+    interval: 5s                       # how often the gate reads Prometheus (= the scrape interval)
+  steps:                               # canary weights in per cent, after the shadow; after the last step, promote
+    - {weight: 10, min_duration: 45s}
+    - {weight: 50, min_duration: 20s}
+  timeout: 165s                        # my own deadline; the runner kills at 180 s
+  # Stretch 1 (R-29): the shadow phase first. 150 mirrored searches is more than the 120 a hang may answer, so a
+  # hang always stops inside the shadow, where no user waits for it.
+  shadow: {tool: nginx, min_requests: 150}
+  # Stretch 2 (R-31): in RELEASE_STRATEGY=flag runs the flag, not the weights, ramps the candidate.
+  flag:
+    name: svcdesk-2-1
+    steps:
+      - {percent: 10, min_duration: 45s}
+      - {percent: 50, min_duration: 20s}

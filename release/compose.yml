@@ -1,0 +1,155 @@
+# ai-generated: 30% - the course's template and its Stretch 1/2 recipes (nginx mirror, flagd) merged in by an AI assistant;
+# my login, my Lab 3 ladder and the merge decisions are mine
+# The Lab 6 release stack (RELEASE-SPEC.md R-01 to R-06). Copy it to release/compose.yml in your repository and
+# change the two lines marked "yours": your login and your Lab 3 ladder.
+#
+#   docker compose -f release/compose.yml up -d --wait      # edge (Caddy) on localhost:8080, Prometheus on :9090
+#   ./itsmlab.sh traffic 6                                  # the course's traffic through edge, a table every 5 s
+#   docker compose -f release/compose.yml down -v           # stop it; -v also drops Prometheus's data
+#
+# Other host ports: RELEASE_PORT=18080 PROMETHEUS_PORT=19090 docker compose -f release/compose.yml up -d --wait
+#
+# svcdesk 2.0.0 serves every request (weights 100 0). svcdesk-canary runs the same build at weight 0 until your
+# deploy.sh replaces it with a candidate (R-14):  CANARY_IMAGE=<ref> docker compose up -d --no-deps svcdesk-canary
+# Weights change only through Caddy's admin API on edge:2019 (R-14). It is not published on your machine; the
+# skeleton reaches it with `docker compose exec -T edge curl http://127.0.0.1:2019/...`, and the course's runner
+# from the stack's network as http://edge:2019.
+#
+# R-01: no bind mounts (configuration is inline, under configs:), and every published port takes its host port from
+# a variable with a default. R-03: the two svcdesk services differ in `image` only - both come from x-svcdesk
+# below, so anything you add there reaches both. Never set SVCDESK_V2_SEED.
+name: svcdesk-release
+
+x-svcdesk: &svcdesk
+  environment:
+    KB_INDEX_URL: http://kb-index:8080
+    # yours: my Lab 3 ladder (src/svcdesk/metrics.py LADDER), 23 boundaries, 10 ms steps 0.18-0.28 and 0.3 exact
+    # for my latency SLI (slo.md threshold_seconds 0.3, R-05).
+    # Stretch 2 (R-31): both builds ask flagd for svcdesk-2-1 on every search (2.0.0 never asks); here, in x-svcdesk,
+    # so that R-03's config-only diff still holds.
+    SVCDESK_V2_FLAGS_URL: http://flagd:8016
+    SVCDESK_BUCKETS: "0.005,0.01,0.025,0.05,0.1,0.15,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.3,0.4,0.5,1,2.5,5"
+  depends_on:
+    kb-index:
+      condition: service_started
+  restart: unless-stopped
+
+services:
+  edge:
+    image: caddy:2.11.4
+    ports:
+      - "${RELEASE_PORT:-8080}:8080"
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    depends_on: [svcdesk-stable, svcdesk-canary, shadow]
+
+  svcdesk-stable:
+    <<: *svcdesk
+    image: ghcr.io/swasik/svcdesk-v2-seeded:2.0.0
+
+  svcdesk-canary:
+    <<: *svcdesk
+    image: ${CANARY_IMAGE:-ghcr.io/swasik/svcdesk-v2-seeded:2.0.0}
+
+  kb-index:                                          # Lab 3's dependency; no healthcheck: the image has no shell
+    image: ghcr.io/swasik/seeded-toxic:2026
+    environment:
+      SEEDED_TOXIC_LOGIN: itsm-reference             # yours: my kb-index profile, as in Lab 3 (itsmlab.yaml login)
+
+  # Stretch 1 (R-29): nginx behind Caddy as a third upstream; it proxies to svcdesk-stable and mirrors a copy of
+  # every request to svcdesk-canary, throwing the copy's answer away. Caddy weights 0 0 100 = the shadow phase.
+  shadow:
+    image: nginx:1.30.5-alpine
+    configs:
+      - source: nginx
+        target: /etc/nginx/nginx.conf
+
+  # Stretch 2 (R-31): the flag svcdesk-2-1, ON for every search at start (the Core runs are canary runs);
+  # deploy.sh's flag path turns it off, then ramps it with fractional.
+  flagd:
+    image: ghcr.io/open-feature/flagd:v0.17.0
+    command: ["start", "--uri", "file:/etc/flagd/flags.json"]      # OFREP on 8016
+    configs:
+      - source: flags
+        target: /etc/flagd/flags.json
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    configs:
+      - source: prometheus
+        target: /etc/prometheus/prometheus.yml
+
+configs:
+  # Caddy's configuration at start. deploy.sh replaces it at run time through the admin API (POST /load); the
+  # skeleton loads this same text with other weights. Keep `admin 0.0.0.0:2019`: without it the admin API listens on
+  # the container's own localhost only. Never `weighted_round_robin 0 0` (R-06). A `$` in this block is written `$$`
+  # (Compose would substitute it).
+  caddyfile:
+    content: |
+      {
+      	admin 0.0.0.0:2019
+      }
+      :8080 {
+      	reverse_proxy svcdesk-stable:8080 svcdesk-canary:8080 shadow:8080 {
+      		lb_policy weighted_round_robin 100 0 0
+      	}
+      }
+  # Stretch 1's nginx (the course's recipe, unchanged): $$ for every nginx variable; a resolver and variables in
+  # proxy_pass because deploy.sh recreates svcdesk-canary; keepalive_timeout 0 so that a slow or hung mirror never
+  # delays the next user's request on a kept-alive connection; short timeouts on the mirror.
+  nginx:
+    content: |
+      events {}
+      http {
+        access_log off;
+        resolver 127.0.0.11 valid=5s ipv6=off;
+        server {
+          listen 8080;
+          keepalive_timeout 0;
+          location / {
+            mirror /mirror;
+            mirror_request_body off;
+            set $$stable svcdesk-stable:8080;
+            proxy_pass http://$$stable;
+          }
+          location = /mirror {
+            internal;
+            set $$canary svcdesk-canary:8080;
+            proxy_pass http://$$canary$$request_uri;
+            proxy_connect_timeout 200ms;
+            proxy_send_timeout 200ms;
+            proxy_read_timeout 300ms;
+          }
+        }
+      }
+  # Stretch 2's flag file at start: ON for everyone (fractional 100/0), so that a canary run sees each candidate
+  # as itself.
+  flags:
+    content: |
+      {
+        "flags": {
+          "svcdesk-2-1": {
+            "state": "ENABLED",
+            "variants": {"on": true, "off": false},
+            "defaultVariant": "off",
+            "targeting": {"fractional": [["on", 100], ["off", 0]]}
+          }
+        }
+      }
+  # Two tracks, one job (R-05): your Lab 3 queries on job="svcdesk" still see the whole service, and one more
+  # matcher, track="canary" or track="stable", splits it.
+  prometheus:
+    content: |
+      global:
+        scrape_interval: 5s
+        evaluation_interval: 5s
+      scrape_configs:
+        - job_name: svcdesk
+          static_configs:
+            - targets: ["svcdesk-stable:8080"]
+              labels: {track: stable}
+            - targets: ["svcdesk-canary:8080"]
+              labels: {track: canary}
