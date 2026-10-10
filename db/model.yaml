@@ -1,0 +1,12 @@
+# ai-generated: 10% - started from the course's model.example.yaml; the buckets (24 and 3) and the keys are mine
+# Lab 7 model (DATA-SPEC.md D-08, D-09). The schema is db/schema.cql; the arithmetic is EVIDENCE.md, ## Model.
+lab7_model:
+  keyspace: gh
+  tables:
+    events_by_repo:   {buckets: 3}     # 1,500 events of one repository (D-05) / 3 = 500 per bucket, half the threshold
+    events_by_actor:  {buckets: 24}    # 12,000 events of one actor (D-05) / 24 = 500 per bucket, half the threshold
+    events_by_ticket: {}               # at most four events per ticket: no bucket column
+  queries:
+    repo_events:   "SELECT event_id FROM gh.events_by_repo WHERE repo = :repo AND day = :day AND bucket IN :buckets AND created_at >= :from_ts AND created_at < :to_ts"
+    actor_events:  "SELECT event_id FROM gh.events_by_actor WHERE actor = :actor AND day = :day AND bucket IN :buckets AND created_at >= :from_ts AND created_at < :to_ts"
+    ticket_events: "SELECT at, phase FROM gh.events_by_ticket WHERE ticket_id = :ticket_id"

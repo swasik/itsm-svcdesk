@@ -1,0 +1,69 @@
+# ai-generated: ??% - TODO one line on how (this template is the course's; say what you changed)
+# The Lab 7 ring (DATA-SPEC.md D-01, D-02): three ScyllaDB nodes on fixed addresses, each reading the course's
+# scylla.yaml. Copy it to ring/compose.yml in your repository, and the package's scylla/scylla.yaml to
+# scylla/scylla.yaml: the path below is relative to this file.
+#
+#   docker compose -f ring/compose.yml up -d --wait              # about 20 s; CQL of n1 on localhost:9042
+#   docker compose -f ring/compose.yml exec n1 nodetool status   # three lines beginning with UN
+#   docker compose -f ring/compose.yml exec n1 cqlsh             # a CQL shell on n1 (no host port needed)
+#   docker compose -f ring/compose.yml down -v                   # remove the ring; -v also drops the nodes' data
+#
+# 172.28.70.0/24 taken on your machine (a VPN, another project)? Export RING_NET=172.28.71 (PowerShell:
+# $env:RING_NET="172.28.71") in the terminal you work in, before `up`: the whole ring moves to 172.28.71.0/24, the
+# seeds with it. Port 9042 taken? RING_CQL_PORT=19042.
+#
+# D-01, and why each part is here:
+# - the image by tag AND digest. `scylladb/scylla:2026.3` is a floating tag that moved on 29 September 2026; a
+#   `:2026.3` already on your disk may be an older 2026.3.x than the one the course measured. The digest decides.
+# - --smp 1 --memory 1G: one shard and at most 1 GB per node. ScyllaDB documents a floor of 1.5 GB per container;
+#   the lab's data is small enough that 1 GB is fine (HANDOUT.md, the traps).
+# - --overprovisioned 1 --developer-mode 1: a laptop shares its cores and has no tuned disks.
+# - --reactor-backend=epoll: without it the third node may die on a default fs.aio-max-nr of 65536.
+# - fixed addresses (ipv4_address), seeds by address: a node stopped and started again may otherwise come back
+#   with another node's address, and ScyllaDB then refuses to start ("Attempt to add ... as saved endpoint").
+#   The CAP exercise stops two nodes, so this matters.
+# - scylla.yaml read-only from ../scylla/scylla.yaml, byte for byte the course's (D-02: its SHA-256 is published,
+#   and the grader's ring uses its own copy - editing it silences nothing that counts).
+# Port 9180 (Prometheus metrics) is not published: Stretch 4 reaches it from the ring's network (stretch/README.md).
+name: itsm-lab7
+
+x-node: &node
+  image: scylladb/scylla:2026.3.2@sha256:27d6871286b28c2e47f5db8d4400735a7cba8a699426bb308566327bd8946fa1
+  command: --seeds=${RING_NET:-172.28.70}.11 --smp 1 --memory 1G --overprovisioned 1 --developer-mode 1 --reactor-backend=epoll
+  volumes:
+    - ../scylla/scylla.yaml:/etc/scylla/scylla.yaml:ro
+  healthcheck:                                   # healthy = this node answers CQL; three UN is `nodetool status`
+    test: ["CMD-SHELL", "cqlsh -e 'SELECT release_version FROM system.local' > /dev/null 2>&1"]
+    interval: 10s
+    timeout: 15s
+    retries: 30
+    start_period: 180s
+    start_interval: 3s
+
+services:
+  n1:
+    <<: *node
+    ports:
+      - "127.0.0.1:${RING_CQL_PORT:-9042}:9042"  # CQL, for a driver or a GUI on your machine; loopback only
+    networks:
+      ring: {ipv4_address: "${RING_NET:-172.28.70}.11"}
+
+  n2:
+    <<: *node
+    networks:
+      ring: {ipv4_address: "${RING_NET:-172.28.70}.12"}
+    depends_on:
+      n1: {condition: service_healthy}
+
+  n3:
+    <<: *node
+    networks:
+      ring: {ipv4_address: "${RING_NET:-172.28.70}.13"}
+    depends_on:
+      n1: {condition: service_healthy}
+
+networks:
+  ring:                                          # docker network name: itsm-lab7_ring (cassandra-stress joins it)
+    ipam:
+      config:
+        - subnet: "${RING_NET:-172.28.70}.0/24"

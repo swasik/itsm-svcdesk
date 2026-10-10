@@ -1,0 +1,40 @@
+# ai-generated: 0% - the course's recipe, unchanged
+# Stretch 1, vector search (DATA-SPEC.md D-21): the vector-store service beside your ring, and every node started
+# with --vector-store-primary-uri pointing at it. An override: ring/compose.yml stays exactly as D-01 wants it.
+# Copy this file to stretch/vector/compose.override.yml in your repository, then:
+#
+#   docker compose -f ring/compose.yml -f stretch/vector/compose.override.yml up -d --wait   # restarts the 3 nodes
+#   docker compose -f ring/compose.yml -f stretch/vector/compose.override.yml exec n1 curl -s http://vector-store:6080/api/v1/info
+#   docker compose -f ring/compose.yml -f stretch/vector/compose.override.yml exec -T n1 cqlsh < stretch/vector/vector.cql
+#   docker compose -f ring/compose.yml up -d --wait --remove-orphans                          # back to the plain ring
+#
+# Why each part is here:
+# - an override replaces a service's whole `command`, so D-01's flags are repeated below with the one flag added.
+#   If you changed the command in your ring/compose.yml, change it here the same way.
+# - vector-store 1.11.0 pinned by tag and digest: `scylladb/vector-store:latest` is the old 1.5.1.
+# - fixed address .20 on your ring's subnet (RING_NET, as in ring/compose.yml): the nodes find vector-store by it.
+# - VECTOR_STORE_URI 0.0.0.0:6080: its default, 127.0.0.1, would accept no call from the nodes.
+# Measured on 30 September 2026: vector-store takes about 20 MiB idle and 75-110 MiB with a small index; the nodes
+# gain nothing measurable from the flag.
+x-vector-node-command: &vector-node-command >-
+  --seeds=${RING_NET:-172.28.70}.11 --smp 1 --memory 1G --overprovisioned 1 --developer-mode 1 --reactor-backend=epoll
+  --vector-store-primary-uri=http://${RING_NET:-172.28.70}.20:6080
+
+services:
+  n1:
+    command: *vector-node-command
+  n2:
+    command: *vector-node-command
+  n3:
+    command: *vector-node-command
+
+  vector-store:
+    image: scylladb/vector-store:1.11.0@sha256:98ad0d0dd5d2f1d1f5e18dedb782e43941b5bfb9ff1dd68d44842e2d3d5467be
+    environment:
+      VECTOR_STORE_URI: "0.0.0.0:6080"
+      VECTOR_STORE_SCYLLADB_URI: "${RING_NET:-172.28.70}.11:9042"
+    networks:
+      ring:
+        ipv4_address: "${RING_NET:-172.28.70}.20"
+    depends_on:
+      n1: {condition: service_healthy}

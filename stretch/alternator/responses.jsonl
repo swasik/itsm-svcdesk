@@ -1,0 +1,10 @@
+{"TableDescription":{"TableName":"ticket_phases","BillingMode":"PAY_PER_REQUEST","AttributeDefinitions":[{"AttributeName":"ticket_id","AttributeType":"S"},{"AttributeName":"at_phase","AttributeType":"S"}],"KeySchema":[{"AttributeName":"ticket_id","KeyType":"HASH"},{"AttributeName":"at_phase","KeyType":"RANGE"}],"CreationDateTime":1791673295.158,"TableStatus":"ACTIVE","TableId":"8a9e8d60-c4fe-11f1-92e4-720f04dd7d4f"}}
+{}
+{}
+{}
+{"__type":"com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException","message":"The conditional request failed"}
+{"Item":{"ticket_id":{"S":"T-100"},"at_phase":{"S":"2026-10-10T22:57:01Z#created"},"priority":{"S":"P3"},"state":{"S":"new"}}}
+{"Attributes":{"ticket_id":{"S":"T-100"},"at_phase":{"S":"2026-10-10T23:10:00Z#resolved"},"priority":{"S":"P3"},"state":{"S":"resolved"},"note":{"S":"fixed by restart"}}}
+{"Count":2,"ScannedCount":2,"Items":[{"ticket_id":{"S":"T-100"},"at_phase":{"S":"2026-10-10T22:57:01Z#acknowledged"},"priority":{"S":"P3"},"state":{"S":"acknowledged"}},{"ticket_id":{"S":"T-100"},"at_phase":{"S":"2026-10-10T22:57:01Z#created"},"priority":{"S":"P3"},"state":{"S":"new"}}]}
+{"Count":3,"ScannedCount":3}
+{"TableDescription":{"TableName":"ticket_phases","TableSizeBytes":0,"TableStatus":"DELETING","TableArn":"arn:scylla:alternator:alternator_ticket_phases:scylla:table/ticket_phases","TableId":"8a9e8d60-c4fe-11f1-92e4-720f04dd7d4f","BillingModeSummary":{"LastUpdateToPayPerRequestDateTime":1791673295.158,"BillingMode":"PAY_PER_REQUEST"},"ProvisionedThroughput":{"ReadCapacityUnits":0,"WriteCapacityUnits":0,"NumberOfDecreasesToday":0}}}

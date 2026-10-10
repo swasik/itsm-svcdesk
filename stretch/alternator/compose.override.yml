@@ -1,0 +1,26 @@
+# ai-generated: 0% - the course's recipe, unchanged
+# Stretch 2, Alternator (DATA-SPEC.md D-22): ScyllaDB's DynamoDB-compatible API on port 8000 of every node, with the
+# two options D-22 names (the checker's ring uses the same two), and n1's port 8000 published on your loopback for
+# curl. An override: ring/compose.yml stays exactly as D-01 wants it. Copy it to stretch/alternator/, then:
+#
+#   docker compose -f ring/compose.yml -f stretch/alternator/compose.override.yml up -d --wait   # restarts the 3 nodes
+#   curl -s http://127.0.0.1:8000/                  # "healthy: 127.0.0.1:8000" once n1 serves the API
+#   docker compose -f ring/compose.yml up -d --wait --remove-orphans                              # back to the plain ring
+#
+# - an override replaces a service's whole `command`, so D-01's flags are repeated below with the two added. If you
+#   changed the command in your ring/compose.yml, change it here the same way.
+# - no AWS keys and no request signing: alternator_enforce_authorization is off unless set, so plain curl works.
+# - port 8000 taken on your machine? RING_ALTERNATOR_PORT=18000, and use that port in send.sh's URL.
+x-alternator-node-command: &alternator-node-command >-
+  --seeds=${RING_NET:-172.28.70}.11 --smp 1 --memory 1G --overprovisioned 1 --developer-mode 1 --reactor-backend=epoll
+  --alternator-port 8000 --alternator-write-isolation always
+
+services:
+  n1:
+    command: *alternator-node-command
+    ports:
+      - "127.0.0.1:${RING_ALTERNATOR_PORT:-8000}:8000"
+  n2:
+    command: *alternator-node-command
+  n3:
+    command: *alternator-node-command

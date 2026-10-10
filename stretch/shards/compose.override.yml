@@ -1,0 +1,36 @@
+# ai-generated: 0% - the course's recipe, unchanged
+# Stretch 4, shard per core (DATA-SPEC.md D-24): n3 started with two shards (--smp 2), and Lab 3's Prometheus image
+# (prom/prometheus:v3.15.0) on the ring's network scraping :9180 of every node - port 9180 is not published by
+# ring/compose.yml, so Prometheus has to sit on the ring's network to reach it. Copy it to stretch/shards/.
+#
+# ONE WAY ONLY (measured on 30 September 2026): a node raised from 1 to 2 shards comes back fine, but started again
+# with --smp 1 it refuses to start for good ("reducing shard count with tablet-enabled tables is not yet supported.
+# Replace the node instead."). So do not run this on the ring that holds your work - run a throwaway ring beside it
+# (another project name and subnet), and remove it afterwards; stretch/README.md section 4 has the commands.
+#
+# - n3's command is D-01's with `--smp 2`; `--memory 1G` stays the node's total (each shard gets half).
+# - Prometheus is published on 127.0.0.1:9091, so that it does not collide with Lab 3's own on 9090.
+# - the scrape configuration is inline (a Compose config, no bind mount); prometheus-scylla.yml in this folder is the
+#   same job, to paste into Lab 3's prometheus/prometheus.yml if you would rather use that Prometheus.
+services:
+  n3:
+    command: --seeds=${RING_NET:-172.28.70}.11 --smp 2 --memory 1G --overprovisioned 1 --developer-mode 1 --reactor-backend=epoll
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    configs:
+      - source: prometheus-scylla
+        target: /etc/prometheus/prometheus.yml
+    ports:
+      - "127.0.0.1:${RING_PROM_PORT:-9091}:9090"
+    networks: [ring]
+
+configs:
+  prometheus-scylla:
+    content: |
+      global:
+        scrape_interval: 5s
+      scrape_configs:
+        - job_name: scylla
+          static_configs:
+            - targets: ["n1:9180", "n2:9180", "n3:9180"]
