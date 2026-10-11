@@ -55,7 +55,7 @@ services:
   kb-index:                                          # Lab 3's dependency; no healthcheck: the image has no shell
     image: ghcr.io/swasik/seeded-toxic:2026
     environment:
-      SEEDED_TOXIC_LOGIN: itsm-reference             # yours: my kb-index profile, as in Lab 3 (itsmlab.yaml login)
+      SEEDED_TOXIC_LOGIN: swasik                     # yours: my GitHub login (itsmlab.yaml login), R-02
 
   # Stretch 1 (R-29): nginx behind Caddy as a third upstream; it proxies to svcdesk-stable and mirrors a copy of
   # every request to svcdesk-canary, throwing the copy's answer away. Caddy weights 0 0 100 = the shadow phase.
