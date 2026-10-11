@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "ai-reviewer",
+          "informationUri": "https://github.com/swasik/itsm-2026-template",
+          "rules": [
+            {
+              "id": "sql-string-format",
+              "name": "sql-string-format",
+              "shortDescription": {
+                "text": "sql-string-format"
+              },
+              "properties": {
+                "tags": [
+                  "CWE-89"
+                ]
+              }
+            },
+            {
+              "id": "hardcoded-credentials",
+              "name": "hardcoded-credentials",
+              "shortDescription": {
+                "text": "hardcoded-credentials"
+              },
+              "properties": {
+                "tags": [
+                  "CWE-259"
+                ]
+              }
+            },
+            {
+              "id": "pyyaml-version",
+              "name": "pyyaml-version",
+              "shortDescription": {
+                "text": "pyyaml-version"
+              },
+              "properties": {
+                "tags": [
+                  "CWE-1035"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "sql-string-format",
+          "level": "warning",
+          "message": {
+            "text": "The team_id is directly formatted into an SQL query using string formatting with %d, which is vulnerable to injection if the input is not properly validated or sanitized."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lab5-canary/app/ticket_counts.py"
+                },
+                "region": {
+                  "startLine": 8,
+                  "endLine": 8
+                }
+              }
+            }
+          ],
+          "properties": {
+            "class": "injection"
+          }
+        },
+        {
+          "ruleId": "hardcoded-credentials",
+          "level": "warning",
+          "message": {
+            "text": "The script uses a hardcoded username and password in the curl command, which is a credential in the code and poses a security risk."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lab5-canary/config/backup.sh"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "class": "secret"
+          }
+        },
+        {
+          "ruleId": "hardcoded-credentials",
+          "level": "warning",
+          "message": {
+            "text": "The CMDB_BEARER_TOKEN contains a bearer token in the code, which is a credential and should not be hardcoded in source files."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lab5-canary/config/cmdb_token.py"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "properties": {
+            "class": "secret"
+          }
+        },
+        {
+          "ruleId": "hardcoded-credentials",
+          "level": "warning",
+          "message": {
+            "text": "The GITHUB_TOKEN contains a personal access token in the code, which is a credential and should not be hardcoded in source files."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lab5-canary/config/github.py"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "properties": {
+            "class": "secret"
+          }
+        },
+        {
+          "ruleId": "pyyaml-version",
+          "level": "warning",
+          "message": {
+            "text": "PyYAML 5.3.1 is affected by CVE-2020-14343, which allows remote code execution via YAML parsing."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lab5-canary/requirements.txt"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "class": "vulnerable-dependency"
+          }
+        }
+      ],
+      "properties": {
+        "model": "qwen3:4b-instruct (Ollama 0.34.4, local)",
+        "route": "local"
+      }
+    }
+  ]
+}
