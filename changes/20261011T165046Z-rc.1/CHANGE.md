@@ -1,21 +1,21 @@
 ---
 lab6_change:
-  id: CHG-20261011T012631Z
-  candidate: "itsmlab.local/lab6-candidate:a31685f87c87"
+  id: CHG-20261011T165046Z
+  candidate: "itsmlab.local/lab6-candidate:9ff743970063"
   stable: "ghcr.io/swasik/svcdesk-v2-seeded:2.0.0"
   strategy: canary
   change_type: standard
   risk: low
   rollback_plan: "Caddy weights back to stable 100 / canary 0 through the admin API in one call (never 0 0); in a flag run the flag off first. The stable build serves throughout and is never restarted."
-  started: 2026-10-11T01:26:31Z
-  finished: 2026-10-11T01:27:01Z
+  started: 2026-10-11T16:50:46Z
+  finished: 2026-10-11T16:51:14Z
   outcome: rolled-back
-  reason: "shadow: the canary's searches stopped arriving - none observed for 16 s while about 600 should have (stuck at 87): a hung candidate"
+  reason: "shadow: the canary's searches stopped arriving - none observed for 15 s while about 600 should have (stuck at 40): a hung candidate"
   actions:
-    - {at: 2026-10-11T01:26:33Z, action: "start svcdesk-canary with the candidate at weight 0", autonomy: closed-loop}
-    - {at: 2026-10-11T01:26:35Z, action: "set weights 0/0/100: the shadow phase (users on 2.0.0 through nginx, a copy to the candidate)", autonomy: closed-loop}
-    - {at: 2026-10-11T01:26:35Z, action: "shadow: read the canary's and the stable build's search counters from Prometheus (phase start)", autonomy: read-only}
-    - {at: 2026-10-11T01:27:01Z, action: "set weights 100/0 (roll back: the stable build serves every request)", autonomy: closed-loop}
+    - {at: 2026-10-11T16:50:48Z, action: "start svcdesk-canary with the candidate at weight 0", autonomy: closed-loop}
+    - {at: 2026-10-11T16:50:48Z, action: "set weights 0/0/100: the shadow phase (users on 2.0.0 through nginx, a copy to the candidate)", autonomy: closed-loop}
+    - {at: 2026-10-11T16:50:48Z, action: "shadow: read the canary's and the stable build's search counters from Prometheus (phase start)", autonomy: read-only}
+    - {at: 2026-10-11T16:51:14Z, action: "set weights 100/0 (roll back: the stable build serves every request)", autonomy: closed-loop}
 ---
 # Change record
 
@@ -42,4 +42,4 @@ hang (q = 1, c = 0, D = the 12 s stall rule + a scrape + a look, about 22 s) abo
 What my gate cannot see: a candidate that breaks only routes other than /kb/search, and a fault that starts after
 promotion.
 
-This run: candidate itsmlab.local/lab6-candidate:a31685f87c87, strategy canary.
+This run: candidate itsmlab.local/lab6-candidate:9ff743970063, strategy canary.

@@ -1,6 +1,6 @@
 ---
 lab6_blast_radius:
-  postmortem_action: {bug: none, commit: 80aae96d57bd8d39c3a1e3f61711cd2337b458ed}
+  postmortem_action: {bug: ITSM-103, commit: 29fa11000e20511c4a9067044c2c37703d70790b}
 ---
 <!-- ai-generated: 40% - an AI assistant drafted the prose from my run logs and my arithmetic; the numbers are my runs' and I checked each one -->
 
@@ -9,13 +9,16 @@ lab6_blast_radius:
 ## Gate
 
 **Baseline: my own Lab 3 SLO** (`baselines: {lab3: student}`): 28 days, availability 99.5 %, latency 99 % within
-0.3 s. My threshold is 0.3 s, under the 1 s limit, and my profile (`itsm-reference`) lets 2.0.0 meet both
-objectives with room to spare, so I had no reason to take the checkpoint.
+0.3 s. My threshold is 0.3 s, under the 1 s limit. My Lab 3 stack ran `kb-index` with the profile
+`itsm-reference`; R-02 wants my login in the release stack, so `release/compose.yml` runs the profile `swasik`
+(commit b62f9ec), and that profile too lets 2.0.0 meet both objectives with room to spare (below), so I had no reason
+to take the checkpoint.
 
 **Thresholds as burn rates.** `max_burn_rate: 10` on both SLIs: a step fails when the canary's 5xx share exceeds
 10 x (1 - 0.995) = **5 %**, or its share slower than 0.3 s exceeds 10 x (1 - 0.99) = **10 %**. The floor my stable
 build showed: in the traffic table about 9 failures in 3,600 searches (0.25 %, burn 0.5) and a p99 of 230-260 ms;
-over the checker's warm-ups 0.15-0.27 % 5xx and 0.00-0.05 % slower than 0.3 s (advisory `stable-vs-gate`, against
+over the checker's warm-ups 0.15-0.27 % 5xx and 0.00-0.05 % slower than 0.3 s with `itsm-reference`, and with
+`swasik` 0.19-0.25 % 5xx and 0.00 % slow over 4,808 warm-up answers (advisory `stable-vs-gate`, against
 half-thresholds of 2.5 % and 5 %). So the honest floor sits 20 to 200 times below my thresholds, and every errors or
 slow candidate (at least 30 %, burn 60 and 30) sits 6 and 3 times above them. A burn rate of 1 (0.5 %) would sit on
 top of kb-index's 0.4 % worst profile; 40 (20 %) would leave only a factor 1.5 to the weakest bad candidate. 10 is
@@ -48,16 +51,20 @@ roll back: no evidence, no promotion. And 15 s before my own deadline (165 s) th
 
 ## Blast radius
 
-The four practice runs of `itsmlab verify 6 --save` (seed `practice`), in `changes/`:
+The four practice runs of `itsmlab verify 6 --save` (seed `practice`, "practice table: course key": the published
+`svcdesk-v2-seeded` images), and the two flag runs it saves for Stretch 2, in `changes/`:
 
 | run | behaviour | outcome | measured blast radius | c | w | q | D (s) | predicted |
 |---|---|---|---|---|---|---|---|---|
-| `20261011T012631Z-rc.1` | hang (k = 87) | rolled back in the shadow, 30 s after the start: no canary search for 16 s while about 600 were mirrored | **0** | 0 | 0 (shadow) | 1 | about 17 | 0 |
-| `20261011T012755Z-rc.2` | slow | rolled back in the shadow, 14 s: 38 of 143 searches over 0.3 s (26.6 %) against 10 % | **0** | 5 | 0 (shadow) | about 0.3 | about 8 | 0 |
-| `20261011T012904Z-rc.3` | honest | promoted, 79 s: shadow (about 400 searches), 10 % for 45 s, 50 % for 20 s | **0** (2 candidate 5xx, floor 2) | - | 0.1, 0.5 | 0.0016 (kb-index) | - | about 0 |
-| `20261011T013117Z-rc.4` | errors | rolled back in the shadow, 14 s: 81 of 191 searches 5xx (42.4 %) against 5 % | **0** | 5 | 0 (shadow) | about 0.42 | about 8 | 0 |
-| `20261011T013226Z-rc.1` (flag) | hang | rolled back at flag 10 %, 50 s: no flag-on search for 15 s | **86** (all timeouts) | 0 | 0.10 | 1 | about 22 | 88 |
-| `20261011T013410Z-rc.3` (flag) | honest | promoted, 73 s: flag 10 % for 45 s, 50 % for 20 s | **10** (10 candidate 5xx, floor 0) | - | 0.1, 0.5 | kb-index | - | about 5 |
+| `20261011T165046Z-rc.1` | hang (k = 40) | rolled back in the shadow, 28 s after the start: the canary's count stuck at 40 for 15 s while about 600 were mirrored | **0** | 0 | 0 (shadow) | 1 | about 20 | 0 |
+| `20261011T165211Z-rc.2` | honest | promoted, 87 s: shadow (541 searches before the first user answer), 10 % for 45 s, 50 % for 20 s | **2** (4 candidate 5xx on 1,196 answers, floor 2) | - | 0.1, 0.5 | 0.0015 (kb-index) | - | about 0 |
+| `20261011T165434Z-rc.3` | slow | rolled back in the shadow, 13 s: 36 of 111 searches over 0.3 s (32.4 %) against 10 % | **0** | 5 | 0 (shadow) | about 0.3 | about 8 | 0 |
+| `20261011T165542Z-rc.4` | errors | rolled back in the shadow, 14 s: 77 of 182 searches 5xx (42.3 %) against 5 % | **0** | 5 | 0 (shadow) | about 0.42 | about 8 | 0 |
+| `20261011T165652Z-rc.1` (flag) | hang (k = 40) | rolled back at flag 10 %, 37 s: no flag-on search for 15 s | **84** (all timeouts) | 0 | 0.10 | 1 | about 22 | 88 |
+| `20261011T165824Z-rc.2` (flag) | honest | promoted, 78 s: flag 10 % for 45 s, 50 % for 20 s | **1** (8 candidate 5xx on 3,487 answers, floor 7) | - | 0.1, 0.5 | kb-index | - | about 0 |
+
+Which slot did what is the course key's draw, not the one I first practised on (there rc.3 was honest and rc.2
+slow): my gate has no notion of a slot, and the same commit gave the right outcome under both.
 
 Prediction with `failures ~ c + R x w x q x D`: in the shadow phase **w = 0** for users - nginx answers every user
 from 2.0.0 and throws the candidate's copy away - so R x w x q x D is 0 whatever D is, and c is paid by mirrored
@@ -68,15 +75,16 @@ candidate's answers, minus the floor the stable build's share predicts (R-19), n
 Without the shadow the same gate would pay at the 10 % step: errors at q = 0.6, c = 5, D = about 12 s (a scrape, a
 look, the admin call): 5 + 40 x 0.1 x 0.6 x 12 = about 34; a hang (c = 0, q = 1) with D = 12 s of silence + up to 5 s
 of scrape + 5 s of look = 22 s: 40 x 0.1 x 1 x 22 = 88. My flag runs measure that path, because a flag run has no
-shadow: the hang above cost 86 against 88 predicted - D is the term that dominates: 15-16 s until my stall rule
+shadow: the hang above cost 84 against 88 predicted - D is the term that dominates: 15-16 s until my stall rule
 (12 s without a new search, checked every 5 s) fires, up to 5 s of scrape before the last search shows, 2 s because
-my looks read Prometheus 2 s in the past, and the admin call. The honest flag run's 10 are kb-index's: the stable
-build answered nothing after the switch to the dark candidate, so its 5xx share - read from a warm-up that happened to
-have no 5xx - predicted a floor of 0, and all of kb-index's ordinary failures on 3,423 candidate answers (0.3 %) count. What would push a run over 150: a first step of 25 % or more with the
-same D (40 x 0.25 x 1 x 22 = 220), a `[1m]` window that keeps the hang's old searches in view, or a gate that waits
+my looks read Prometheus 2 s in the past, and the admin call. The honest flag run's 8 candidate 5xx on 3,487 answers
+(0.23 %) are kb-index's floor; the stable build's share (0.21 %) predicts 7 of them, so 1 counts. (My first flag practice run,
+with the TEST builds, counted 10: its warm-up happened to have no 5xx, so its floor was 0.) What would push a run over
+150: a first step of 25 % or more with the same D (40 x 0.25 x 1 x 22 = 220), a `[1m]` window that keeps the hang's old searches in view, or a gate that waits
 for `min_requests` before it looks at arrivals at all.
 
-Beyond the four runs: `itsmlab verify 6 --seed p01` .. `p16`, every one with the gate of commit 80aae96, gave the
+Beyond the four runs: `itsmlab verify 6 --seed p01` .. `p16` (run against the course's TEST builds of the images,
+before the published ones reached my machine), every one with the gate of commit 29fa110, gave the
 right outcome in all 64 canary runs (blast radius 0 for every bad candidate - all caught in the shadow - and 0 to 4
 for the honest one) and all 32 flag runs (bad: 8 to 23 for errors and slow, 67 to 100 for the hang). Six of them
 (p02, p03, p05, p07, p13, p14) again with the current gate (one read instant per look, below): the same 36
@@ -86,7 +94,7 @@ shadow: 100 is two thirds of the ceiling, and it is what the hang costs at 10 % 
 One bug the logs showed me: my counters were six separate queries, and when a scrape landed between the count and
 its `le` bucket, a whole scrape's searches read as slow or as negative (the control's slow share once read -100 %).
 Read at the start of a step, after the shadow's 200 searches a scrape, that could have rolled back the honest
-candidate. Every look now reads all its counters at one instant 2 s in the past (commit 288ac36).
+candidate. Every look now reads all its counters at one instant 2 s in the past (commit e3fae3d).
 
 ## Change classification
 
@@ -116,20 +124,27 @@ well understood), or a bad candidate reaching users through the shadow (the boun
 
 ## Postmortem action
 
-My Lab 4 postmortem (`postmortem.md`, my own: `baselines: {lab4: student}`) has the action item "Record every
-runtime flag change as a change in svcdesk, and export the failing-flag count as a metric the dashboards show"
-(type prevent, owner platform team). Its Bug column says `none`, as every row of my table does - I filed no tracker
-ids in Lab 4 - so `bug: none` above names the column's value; the row is this one. The incident was three feature
-flags switched on together with nobody recording the change, and the on-call found them only by reading the flag
-state.
+My Lab 4 postmortem (`postmortem.md`, my own: `baselines: {lab4: student}`) found that the incident was three
+feature flags switched on together in the shop's flagd, with nobody recording the change: the on-call found them
+only by reading `/flags.json` after the symptoms. Its action item **ITSM-103** (type prevent, owner platform team)
+asks to "Record every runtime flag change as a change in svcdesk, and export the count of failing flags as a metric
+the dashboards show". None of my five action items is a release-gate change in the strict sense - ITSM-101 and
+ITSM-102 are alerting rules, ITSM-104 is a timeout in the shop's code, ITSM-105 a runbook step - and ITSM-103 is the
+one a release process can honestly implement, because my `deploy.sh` itself changes a runtime flag (`svcdesk-2-1`,
+Stretch 2).
 
-Commit 80aae96 implements the first half in `deploy.sh`'s flag path (Stretch 2): every flag change goes through
+Commit 29fa110 implements the first half for every flag change my release process makes: each one goes through
 `change_flag`, which writes it into the change record as a closed-loop action with its before and after ("flag
 svcdesk-2-1: 10 % -> 50 % (step 2)"), and then reads the flag back from flagd itself - 40 OFREP evaluations with
 random targeting keys - and records what flagd actually serves as a read-only action ("17 of 40 evaluations on").
 A change flagd does not serve is a failed change: going dark fails the run before the candidate starts, and a step
-that flagd does not apply rolls back. That matters because flagd silently ignores a flag file it cannot read and
-stops watching after that; without the read-back the record would claim a change that never happened. My practice
-flag runs show it working: the honest flag run's record (`changes/20261011T013410Z-rc.3/CHANGE.md`) lists 0 -> 10
--> 50 -> 100 % with read-backs of 0/40, 3/40, 28/40 and 40/40. Where it stops short: the second half of the action item, a failing-flag metric on the dashboards,
-is not done - the record is per release, not a time series.
+that flagd does not apply rolls back. That matters because flagd silently ignores a flag file it cannot read; without
+the read-back the record would claim a change that never happened - the opposite of what ITSM-103 wants. My practice
+flag runs show it working: the honest flag run's record (`changes/20261011T165824Z-rc.2/CHANGE.md`) lists 0 -> 10 -> 50 -> 100 % with
+read-backs of 0/40, 4/40, 19/40 and 40/40, and the hang's flag run records 0 -> 10 -> 0 % with each read back.
+
+Where it stops short: the record is `CHANGE.md` in this repository, not a change in svcdesk's own records; it covers
+the flags this release changes, not a flag someone flips by hand in the shop's flagd (the Lab 4 incident's case);
+and the second half, a failing-flag metric on the dashboards, is not done - a record per release is not a time
+series. Closing those needs the flag change to go through one tool that both writes the svcdesk change and exports
+the gauge, which is the platform team's part of ITSM-103.

@@ -1,26 +1,26 @@
 {
   "schema": 1,
-  "strategy": "flag",
-  "slot": 1,
-  "candidate": "itsmlab.local/lab6-candidate:a31685f87c87",
+  "strategy": "canary",
+  "slot": 4,
+  "candidate": "itsmlab.local/lab6-candidate:eff061e99e51",
   "seed": "practice",
-  "t_traffic_start": 1791682316.837,
-  "t_deploy_start": 1791682346.856,
-  "t_deploy_end": 1791682396.866,
-  "t_bake_end": 1791682411.866,
+  "t_traffic_start": 1791737712.599,
+  "t_deploy_start": 1791737742.635,
+  "t_deploy_end": 1791737756.344,
+  "t_bake_end": 1791737771.344,
   "exit": 3,
   "killed": false,
   "stack": {
     "up": true,
-    "seconds": 1.7,
+    "seconds": 2.5,
     "error": null
   },
   "prometheus": {
     "queries_before": 0.0,
-    "queries_after": 59.0,
+    "queries_after": 20.0,
     "tracks": {
-      "stable": 841.8,
-      "canary": 1547.9
+      "stable": 1134.0,
+      "canary": 295.7
     },
     "up": {
       "stable": 1,
@@ -61,46 +61,46 @@
       "5.0"
     ],
     "shadow": {
-      "canary_requests": 0.0,
-      "until": 1791682353.287
+      "canary_requests": 430.0,
+      "until": 1791737771.344
     }
   },
   "kb_index": {
     "before": 0,
-    "after": 3716
+    "after": 2598
   },
   "record": "CHANGE.md",
-  "behaviour": "hang",
+  "behaviour": "errors",
   "evaluation": {
-    "strategy": "flag",
-    "slot": 1,
-    "candidate_version": "2.1.0-rc.1",
+    "strategy": "canary",
+    "slot": 4,
+    "candidate_version": "2.1.0-rc.4",
     "exit": 3,
     "killed": false,
-    "requests": 3802,
+    "requests": 2350,
     "stopped": 0,
     "warmup": {
-      "requests": 1201,
-      "answered": 1201,
-      "stable": 1201,
-      "stable_200": 1201,
+      "requests": 1202,
+      "answered": 1202,
+      "stable": 1202,
+      "stable_200": 1202,
       "stable_5xx": 0,
       "timeouts": 0,
       "transport": 0,
-      "stable_fingerprint": "94369946"
+      "stable_fingerprint": "38bc611e"
     },
     "blast_radius": {
-      "total": 86,
-      "headerless": 86,
-      "candidate_5xx": 1,
-      "floor": 1,
-      "candidate_answers": 1655,
-      "stable_5xx_share": 0.000485
+      "total": 0,
+      "headerless": 0,
+      "candidate_5xx": 0,
+      "floor": 0,
+      "candidate_answers": 0,
+      "stable_5xx_share": 0.000851
     },
     "candidate": {
-      "answers": 1655,
-      "first_answer": 1791682353.287,
-      "feature_off": 1568
+      "answers": 0,
+      "first_answer": null,
+      "feature_off": 0
     },
     "end": {
       "state": "rolled-back",
@@ -110,7 +110,7 @@
       "stable": 520,
       "on": 0,
       "off": 520,
-      "failures": 0
+      "failures": 1
     },
     "end_state": "rolled-back",
     "outcome": "rolled-back",
@@ -118,9 +118,9 @@
       {
         "start": -35.0,
         "phase": "warm-up",
-        "requests": 1,
-        "answered": 1,
-        "stable": 1,
+        "requests": 2,
+        "answered": 2,
+        "stable": 2,
         "candidate": 0,
         "other": 0,
         "share": 0.0,
@@ -129,9 +129,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": -30.0,
@@ -147,9 +145,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": -25.0,
@@ -165,9 +161,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": -20.0,
@@ -183,9 +177,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": -15.0,
@@ -201,9 +193,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": -10.0,
@@ -219,9 +209,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": -5.0,
@@ -237,9 +225,7 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": 0.0,
@@ -251,272 +237,114 @@
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       },
       {
         "start": 5.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 57,
-        "candidate": 143,
+        "stable": 200,
+        "candidate": 0,
         "other": 0,
-        "share": 0.715,
+        "share": 0.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 15,
-        "exposure": 0.075
+        }
       },
       {
         "start": 10.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 0,
-        "candidate": 200,
+        "stable": 200,
+        "candidate": 0,
         "other": 0,
-        "share": 1.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 0,
-          "transport": 0,
-          "headerless": 0
-        },
-        "on": 26,
-        "exposure": 0.13
-      },
-      {
-        "start": 15.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 200,
-        "stable": 0,
-        "candidate": 200,
-        "other": 0,
-        "share": 1.0,
+        "share": 0.0,
         "failures": {
           "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 13,
-        "exposure": 0.065
+        }
+      },
+      {
+        "start": 15.0,
+        "phase": "bake",
+        "requests": 200,
+        "answered": 200,
+        "stable": 200,
+        "candidate": 0,
+        "other": 0,
+        "share": 0.0,
+        "failures": {
+          "5xx": 0,
+          "timeout": 0,
+          "transport": 0,
+          "headerless": 0
+        }
       },
       {
         "start": 20.0,
-        "phase": "script",
+        "phase": "bake",
         "requests": 200,
         "answered": 200,
-        "stable": 0,
-        "candidate": 200,
+        "stable": 200,
+        "candidate": 0,
         "other": 0,
-        "share": 1.0,
+        "share": 0.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 22,
-        "exposure": 0.11
+        }
       },
       {
         "start": 25.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 193,
-        "stable": 0,
-        "candidate": 193,
-        "other": 0,
-        "share": 1.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 7,
-          "transport": 0,
-          "headerless": 7
-        },
-        "on": 11,
-        "exposure": 0.057
-      },
-      {
-        "start": 30.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 173,
-        "stable": 0,
-        "candidate": 173,
-        "other": 0,
-        "share": 1.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 27,
-          "transport": 0,
-          "headerless": 27
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 35.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 185,
-        "stable": 0,
-        "candidate": 185,
-        "other": 0,
-        "share": 1.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 15,
-          "transport": 0,
-          "headerless": 15
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 40.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 179,
-        "stable": 0,
-        "candidate": 179,
-        "other": 0,
-        "share": 1.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 21,
-          "transport": 0,
-          "headerless": 21
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 45.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 184,
-        "stable": 2,
-        "candidate": 182,
-        "other": 0,
-        "share": 0.9891,
-        "failures": {
-          "5xx": 0,
-          "timeout": 16,
-          "transport": 0,
-          "headerless": 16
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 50.0,
-        "phase": "script",
-        "requests": 200,
-        "answered": 200,
-        "stable": 200,
-        "candidate": 0,
-        "other": 0,
-        "share": 0.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 0,
-          "transport": 0,
-          "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 55.0,
         "phase": "bake",
-        "requests": 200,
-        "answered": 200,
-        "stable": 200,
+        "requests": 148,
+        "answered": 148,
+        "stable": 148,
         "candidate": 0,
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 60.0,
-        "phase": "bake",
-        "requests": 200,
-        "answered": 200,
-        "stable": 200,
-        "candidate": 0,
-        "other": 0,
-        "share": 0.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 0,
-          "transport": 0,
-          "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
-      },
-      {
-        "start": 65.0,
-        "phase": "bake",
-        "requests": 1,
-        "answered": 1,
-        "stable": 1,
-        "candidate": 0,
-        "other": 0,
-        "share": 0.0,
-        "failures": {
-          "5xx": 0,
-          "timeout": 0,
-          "transport": 0,
-          "headerless": 0
-        },
-        "on": 0,
-        "exposure": 0.0
+        }
       }
     ],
     "canary": {
-      "ok": true,
-      "streak": 5,
+      "ok": false,
+      "streak": 0,
       "first_full": null
     },
-    "fingerprints": {
-      "94369946": 1655
-    },
+    "fingerprints": {},
     "fingerprint_ok": true,
     "kb_ok": true,
     "kb": {
-      "delta": 3716.0,
-      "answers_200": 3714,
-      "needed": 3640
+      "delta": 2598.0,
+      "answers_200": 2348,
+      "needed": 2302
     },
-    "queries": 59.0,
+    "queries": 20.0,
     "queries_ok": true,
     "tracks_ok": true,
     "tracks": {
-      "stable": 841.8,
-      "canary": 1547.9,
-      "answers": 2515,
-      "needed": 2264
+      "stable": 1134.0,
+      "canary": 295.7,
+      "answers": 1148,
+      "needed": 1034
     },
     "targets_ok": true
   }

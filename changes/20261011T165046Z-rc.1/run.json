@@ -1,26 +1,26 @@
 {
   "schema": 1,
   "strategy": "canary",
-  "slot": 2,
-  "candidate": "itsmlab.local/lab6-candidate:4d2f65a353f2",
+  "slot": 1,
+  "candidate": "itsmlab.local/lab6-candidate:9ff743970063",
   "seed": "practice",
-  "t_traffic_start": 1791682045.372,
-  "t_deploy_start": 1791682075.389,
-  "t_deploy_end": 1791682090.229,
-  "t_bake_end": 1791682105.229,
+  "t_traffic_start": 1791737416.419,
+  "t_deploy_start": 1791737446.446,
+  "t_deploy_end": 1791737474.905,
+  "t_bake_end": 1791737489.905,
   "exit": 3,
   "killed": false,
   "stack": {
     "up": true,
-    "seconds": 1.7,
+    "seconds": 2.4,
     "error": null
   },
   "prometheus": {
     "queries_before": 0.0,
-    "queries_after": 22.0,
+    "queries_after": 37.0,
     "tracks": {
-      "stable": 1275.6,
-      "canary": 325.7
+      "stable": 1794.4,
+      "canary": 0.0
     },
     "up": {
       "stable": 1,
@@ -31,8 +31,8 @@
       "canary": 1
     },
     "interval": {
-      "canary": "5s",
-      "stable": "5s"
+      "stable": "5s",
+      "canary": "5s"
     },
     "ladder": [
       "+Inf",
@@ -61,33 +61,33 @@
       "5.0"
     ],
     "shadow": {
-      "canary_requests": 417.0,
-      "until": 1791682105.229
+      "canary_requests": 40.0,
+      "until": 1791737489.905
     }
   },
   "kb_index": {
     "before": 0,
-    "after": 2812
+    "after": 2980
   },
   "record": "CHANGE.md",
-  "behaviour": "slow",
+  "behaviour": "hang",
   "evaluation": {
     "strategy": "canary",
-    "slot": 2,
-    "candidate_version": "2.1.0-rc.2",
+    "slot": 1,
+    "candidate_version": "2.1.0-rc.1",
     "exit": 3,
     "killed": false,
-    "requests": 2395,
+    "requests": 2940,
     "stopped": 0,
     "warmup": {
-      "requests": 1201,
-      "answered": 1201,
-      "stable": 1201,
-      "stable_200": 1199,
-      "stable_5xx": 2,
+      "requests": 1202,
+      "answered": 1202,
+      "stable": 1202,
+      "stable_200": 1198,
+      "stable_5xx": 4,
       "timeouts": 0,
       "transport": 0,
-      "stable_fingerprint": "94369946"
+      "stable_fingerprint": "38bc611e"
     },
     "blast_radius": {
       "total": 0,
@@ -95,7 +95,7 @@
       "candidate_5xx": 0,
       "floor": 0,
       "candidate_answers": 0,
-      "stable_5xx_share": 0.000835
+      "stable_5xx_share": 0.002721
     },
     "candidate": {
       "answers": 0,
@@ -110,7 +110,7 @@
       "stable": 520,
       "on": 0,
       "off": 520,
-      "failures": 0
+      "failures": 2
     },
     "end_state": "rolled-back",
     "outcome": "rolled-back",
@@ -118,9 +118,9 @@
       {
         "start": -35.0,
         "phase": "warm-up",
-        "requests": 1,
-        "answered": 1,
-        "stable": 1,
+        "requests": 2,
+        "answered": 2,
+        "stable": 2,
         "candidate": 0,
         "other": 0,
         "share": 0.0,
@@ -189,7 +189,7 @@
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 2,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
@@ -221,7 +221,7 @@
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
@@ -237,7 +237,7 @@
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
@@ -277,7 +277,7 @@
       },
       {
         "start": 15.0,
-        "phase": "bake",
+        "phase": "script",
         "requests": 200,
         "answered": 200,
         "stable": 200,
@@ -293,6 +293,54 @@
       },
       {
         "start": 20.0,
+        "phase": "script",
+        "requests": 200,
+        "answered": 200,
+        "stable": 200,
+        "candidate": 0,
+        "other": 0,
+        "share": 0.0,
+        "failures": {
+          "5xx": 1,
+          "timeout": 0,
+          "transport": 0,
+          "headerless": 0
+        }
+      },
+      {
+        "start": 25.0,
+        "phase": "script",
+        "requests": 200,
+        "answered": 200,
+        "stable": 200,
+        "candidate": 0,
+        "other": 0,
+        "share": 0.0,
+        "failures": {
+          "5xx": 0,
+          "timeout": 0,
+          "transport": 0,
+          "headerless": 0
+        }
+      },
+      {
+        "start": 30.0,
+        "phase": "bake",
+        "requests": 200,
+        "answered": 200,
+        "stable": 200,
+        "candidate": 0,
+        "other": 0,
+        "share": 0.0,
+        "failures": {
+          "5xx": 1,
+          "timeout": 0,
+          "transport": 0,
+          "headerless": 0
+        }
+      },
+      {
+        "start": 35.0,
         "phase": "bake",
         "requests": 200,
         "answered": 200,
@@ -308,16 +356,16 @@
         }
       },
       {
-        "start": 25.0,
+        "start": 40.0,
         "phase": "bake",
-        "requests": 194,
-        "answered": 194,
-        "stable": 194,
+        "requests": 138,
+        "answered": 138,
+        "stable": 138,
         "candidate": 0,
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
@@ -333,18 +381,18 @@
     "fingerprint_ok": true,
     "kb_ok": true,
     "kb": {
-      "delta": 2812.0,
-      "answers_200": 2393,
-      "needed": 2346
+      "delta": 2980.0,
+      "answers_200": 2932,
+      "needed": 2874
     },
-    "queries": 22.0,
+    "queries": 37.0,
     "queries_ok": true,
-    "tracks_ok": true,
+    "tracks_ok": false,
     "tracks": {
-      "stable": 1275.6,
-      "canary": 325.7,
-      "answers": 1194,
-      "needed": 1075
+      "stable": 1794.4,
+      "canary": 0.0,
+      "answers": 1738,
+      "needed": 1565
     },
     "targets_ok": true
   }

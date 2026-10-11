@@ -1,0 +1,48 @@
+16:58:25 candidate itsmlab.local/lab6-candidate:c268db072966, stable ghcr.io/swasik/svcdesk-v2-seeded:2.0.0, strategy flag
+16:58:25 config: SLO window 28d; availability 0.995 (max burn 10); latency 0.99 under 0.3s (max burn 10); min_requests 150; interval 5s; timeout 165s; steps 10 50 % for 45 20 s
+16:58:25 Prometheus http://prometheus:9090; Caddy admin http://edge:2019
+16:58:25 gate: availability fails above 5 % 5xx, latency above 10 % slower than 0.3s (le="0.3"); min_bad 5; stall 12s
+16:58:25 flag svcdesk-2-1 on for 0 % of searches
+16:58:25 action [closed-loop] flag svcdesk-2-1: unknown % -> 0 % (dark, before the candidate starts)
+16:58:26 action [read-only] read flag svcdesk-2-1 back from flagd: 0 of 40 evaluations on (asked for 0 %)
+16:58:26 weights now 100 0 0
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Recreate 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Recreated 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Starting 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Started 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Waiting 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Healthy 
+16:58:27 svcdesk-canary runs itsmlab.local/lab6-candidate:c268db072966
+16:58:27 action [closed-loop] start svcdesk-canary with the candidate at weight 0
+16:58:30 weights now 0 100 0
+16:58:30 action [closed-loop] set weights 0/100: the candidate serves every user, dark (flag off)
+16:58:30 flag svcdesk-2-1 on for 10 % of searches
+16:58:30 action [closed-loop] flag svcdesk-2-1: 0 % -> 10 % (step 1)
+16:58:32 action [read-only] read flag svcdesk-2-1 back from flagd: 4 of 40 evaluations on (asked for 10 %)
+16:58:32 action [read-only] flag 10 %: read the canary's and the stable build's search counters from Prometheus (phase start)
+16:58:37 flag 10 % t+5s: canary n=0 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=0 5xx 0.0 % slow 0.0 %
+16:58:42 flag 10 % t+10s: canary n=21 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=170 5xx 0.0 % slow 0.0 %
+16:58:47 flag 10 % t+15s: canary n=36 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=356 5xx 0.0 % slow 0.0 %
+16:58:53 flag 10 % t+21s: canary n=52 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=539 5xx 0.0 % slow 0.0 %
+16:58:58 flag 10 % t+26s: canary n=92 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=899 5xx 0.1 % slow 0.0 %
+16:59:03 flag 10 % t+31s: canary n=117 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1075 5xx 0.1 % slow 0.0 %
+16:59:08 flag 10 % t+36s: canary n=139 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1252 5xx 0.2 % slow 0.0 %
+16:59:14 flag 10 % t+42s: canary n=162 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1428 5xx 0.1 % slow 0.0 %
+16:59:19 flag 10 % t+47s: canary n=185 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1607 5xx 0.1 % slow 0.0 %
+16:59:19 action [read-only] flag 10 %: 9 reads of the canary's SLIs from Prometheus; passed with 185 searches
+16:59:19 flag 10 % passed: 185 canary searches, 5xx 0.0 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 9 looks
+16:59:19 flag svcdesk-2-1 on for 50 % of searches
+16:59:19 action [closed-loop] flag svcdesk-2-1: 10 % -> 50 % (step 2)
+16:59:20 action [read-only] read flag svcdesk-2-1 back from flagd: 19 of 40 evaluations on (asked for 50 %)
+16:59:20 action [read-only] flag 50 %: read the canary's and the stable build's search counters from Prometheus (phase start)
+16:59:26 flag 50 % t+5s: canary n=20 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=179 5xx 1.1 % slow 0.0 %
+16:59:31 flag 50 % t+11s: canary n=108 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=292 5xx 0.7 % slow 0.0 %
+16:59:36 flag 50 % t+16s: canary n=201 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=398 5xx 0.8 % slow 0.0 %
+16:59:41 flag 50 % t+21s: canary n=298 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=501 5xx 0.6 % slow 0.0 %
+16:59:41 action [read-only] flag 50 %: 4 reads of the canary's SLIs from Prometheus; passed with 298 searches
+16:59:41 flag 50 % passed: 298 canary searches, 5xx 0.0 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 4 looks
+16:59:41 flag svcdesk-2-1 on for 100 % of searches
+16:59:41 action [closed-loop] flag svcdesk-2-1: 50 % -> 100 % (promote)
+16:59:42 action [read-only] read flag svcdesk-2-1 back from flagd: 40 of 40 evaluations on (asked for 100 %)
+16:59:42 record: /tmp/itsmlab6-iy53vtjq/run-6-rc.2/record/CHANGE.md
+16:59:42 outcome: promoted - every flag step passed: flag 50 % passed: 298 canary searches, 5xx 0.0 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 4 looks (78 s)

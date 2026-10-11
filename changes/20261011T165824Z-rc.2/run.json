@@ -1,26 +1,26 @@
 {
   "schema": 1,
-  "strategy": "canary",
-  "slot": 3,
-  "candidate": "itsmlab.local/lab6-candidate:02482186182a",
+  "strategy": "flag",
+  "slot": 2,
+  "candidate": "itsmlab.local/lab6-candidate:c268db072966",
   "seed": "practice",
-  "t_traffic_start": 1791682114.737,
-  "t_deploy_start": 1791682144.758,
-  "t_deploy_end": 1791682223.827,
-  "t_bake_end": 1791682238.827,
+  "t_traffic_start": 1791737874.836,
+  "t_deploy_start": 1791737904.863,
+  "t_deploy_end": 1791737982.99,
+  "t_bake_end": 1791737997.99,
   "exit": 0,
   "killed": false,
   "stack": {
     "up": true,
-    "seconds": 1.8,
+    "seconds": 2.5,
     "error": null
   },
   "prometheus": {
     "queries_before": 0.0,
-    "queries_after": 109.0,
+    "queries_after": 94.0,
     "tracks": {
-      "stable": 2584.5,
-      "canary": 1529.4
+      "stable": 112.6,
+      "canary": 3508.2
     },
     "up": {
       "stable": 1,
@@ -61,46 +61,46 @@
       "5.0"
     ],
     "shadow": {
-      "canary_requests": 381.0,
-      "until": 1791682158.712
+      "canary_requests": 0.0,
+      "until": 1791737910.836
     }
   },
   "kb_index": {
     "before": 0,
-    "after": 5382
+    "after": 4927
   },
   "record": "CHANGE.md",
   "behaviour": "honest",
   "evaluation": {
-    "strategy": "canary",
-    "slot": 3,
-    "candidate_version": "2.1.0-rc.3",
+    "strategy": "flag",
+    "slot": 2,
+    "candidate_version": "2.1.0-rc.2",
     "exit": 0,
     "killed": false,
-    "requests": 4964,
+    "requests": 4927,
     "stopped": 0,
     "warmup": {
-      "requests": 1201,
-      "answered": 1201,
-      "stable": 1201,
-      "stable_200": 1199,
+      "requests": 1202,
+      "answered": 1202,
+      "stable": 1202,
+      "stable_200": 1200,
       "stable_5xx": 2,
       "timeouts": 0,
       "transport": 0,
-      "stable_fingerprint": "94369946"
+      "stable_fingerprint": "38bc611e"
     },
     "blast_radius": {
-      "total": 0,
+      "total": 1,
       "headerless": 0,
-      "candidate_5xx": 2,
-      "floor": 2,
-      "candidate_answers": 1184,
-      "stable_5xx_share": 0.001587
+      "candidate_5xx": 8,
+      "floor": 7,
+      "candidate_answers": 3487,
+      "stable_5xx_share": 0.002083
     },
     "candidate": {
-      "answers": 1184,
-      "first_answer": 1791682158.712,
-      "feature_off": 0
+      "answers": 3487,
+      "first_answer": 1791737910.836,
+      "feature_off": 2234
     },
     "end": {
       "state": "promoted",
@@ -110,7 +110,7 @@
       "stable": 0,
       "on": 520,
       "off": 0,
-      "failures": 2
+      "failures": 3
     },
     "end_state": "promoted",
     "outcome": "promoted",
@@ -118,9 +118,9 @@
       {
         "start": -35.0,
         "phase": "warm-up",
-        "requests": 1,
-        "answered": 1,
-        "stable": 1,
+        "requests": 2,
+        "answered": 2,
+        "stable": 2,
         "candidate": 0,
         "other": 0,
         "share": 0.0,
@@ -129,7 +129,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": -30.0,
@@ -145,7 +147,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": -25.0,
@@ -161,7 +165,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": -20.0,
@@ -173,11 +179,13 @@
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 2,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": -15.0,
@@ -189,11 +197,13 @@
         "other": 0,
         "share": 0.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": -10.0,
@@ -209,7 +219,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": -5.0,
@@ -225,7 +237,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": 0.0,
@@ -241,247 +255,279 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 0,
+        "exposure": 0.0
       },
       {
         "start": 5.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 200,
-        "candidate": 0,
+        "stable": 38,
+        "candidate": 162,
         "other": 0,
-        "share": 0.0,
+        "share": 0.81,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 18,
+        "exposure": 0.09
       },
       {
         "start": 10.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 190,
-        "candidate": 10,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.05,
+        "share": 1.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 16,
+        "exposure": 0.08
       },
       {
         "start": 15.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 15,
+        "exposure": 0.075
       },
       {
         "start": 20.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 19,
+        "exposure": 0.095
       },
       {
         "start": 25.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 22,
+        "exposure": 0.11
       },
       {
         "start": 30.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
-          "5xx": 1,
+          "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 23,
+        "exposure": 0.115
       },
       {
         "start": 35.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 23,
+        "exposure": 0.115
       },
       {
         "start": 40.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 20,
+        "exposure": 0.1
       },
       {
         "start": 45.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 26,
+        "exposure": 0.13
       },
       {
         "start": 50.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 180,
-        "candidate": 20,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.1,
+        "share": 1.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 2,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 19,
+        "exposure": 0.095
       },
       {
         "start": 55.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 168,
-        "candidate": 32,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.16,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 79,
+        "exposure": 0.395
       },
       {
         "start": 60.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 100,
-        "candidate": 100,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.5,
+        "share": 1.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 94,
+        "exposure": 0.47
       },
       {
         "start": 65.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 100,
-        "candidate": 100,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.5,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 96,
+        "exposure": 0.48
       },
       {
         "start": 70.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 100,
-        "candidate": 100,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.5,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 108,
+        "exposure": 0.54
       },
       {
         "start": 75.0,
         "phase": "script",
         "requests": 200,
         "answered": 200,
-        "stable": 81,
-        "candidate": 119,
+        "stable": 0,
+        "candidate": 200,
         "other": 0,
-        "share": 0.595,
+        "share": 1.0,
         "failures": {
           "5xx": 0,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 150,
+        "exposure": 0.75
       },
       {
         "start": 80.0,
@@ -497,7 +543,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 200,
+        "exposure": 1.0
       },
       {
         "start": 85.0,
@@ -509,19 +557,21 @@
         "other": 0,
         "share": 1.0,
         "failures": {
-          "5xx": 0,
+          "5xx": 1,
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 200,
+        "exposure": 1.0
       },
       {
         "start": 90.0,
         "phase": "bake",
-        "requests": 163,
-        "answered": 163,
+        "requests": 125,
+        "answered": 125,
         "stable": 0,
-        "candidate": 163,
+        "candidate": 125,
         "other": 0,
         "share": 1.0,
         "failures": {
@@ -529,7 +579,9 @@
           "timeout": 0,
           "transport": 0,
           "headerless": 0
-        }
+        },
+        "on": 125,
+        "exposure": 1.0
       }
     ],
     "canary": {
@@ -538,23 +590,23 @@
       "first_full": 80.0
     },
     "fingerprints": {
-      "94369946": 1184
+      "38bc611e": 3487
     },
     "fingerprint_ok": true,
     "kb_ok": true,
     "kb": {
-      "delta": 5382.0,
-      "answers_200": 4956,
-      "needed": 4857
+      "delta": 4927.0,
+      "answers_200": 4916,
+      "needed": 4818
     },
-    "queries": 109.0,
+    "queries": 94.0,
     "queries_ok": true,
     "tracks_ok": true,
     "tracks": {
-      "stable": 2584.5,
-      "canary": 1529.4,
-      "answers": 3763,
-      "needed": 3387
+      "stable": 112.6,
+      "canary": 3508.2,
+      "answers": 3725,
+      "needed": 3353
     },
     "targets_ok": true
   }

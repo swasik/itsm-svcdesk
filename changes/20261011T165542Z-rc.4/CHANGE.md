@@ -1,27 +1,21 @@
 ---
 lab6_change:
-  id: CHG-20261011T013226Z
-  candidate: "itsmlab.local/lab6-candidate:a31685f87c87"
+  id: CHG-20261011T165542Z
+  candidate: "itsmlab.local/lab6-candidate:eff061e99e51"
   stable: "ghcr.io/swasik/svcdesk-v2-seeded:2.0.0"
-  strategy: flag
+  strategy: canary
   change_type: standard
   risk: low
   rollback_plan: "Caddy weights back to stable 100 / canary 0 through the admin API in one call (never 0 0); in a flag run the flag off first. The stable build serves throughout and is never restarted."
-  started: 2026-10-11T01:32:26Z
-  finished: 2026-10-11T01:33:16Z
+  started: 2026-10-11T16:55:42Z
+  finished: 2026-10-11T16:55:56Z
   outcome: rolled-back
-  reason: "flag 10 %: the canary's searches stopped arriving - none observed for 15 s while about 60 should have (stuck at 87): a hung candidate"
+  reason: "shadow: availability - 77 of 182 canary searches answered 5xx (42.3 %) against a 5.0 % threshold (stable 0.0 %)"
   actions:
-    - {at: 2026-10-11T01:32:27Z, action: "flag svcdesk-2-1: unknown % -> 0 % (dark, before the candidate starts)", autonomy: closed-loop}
-    - {at: 2026-10-11T01:32:28Z, action: "read flag svcdesk-2-1 back from flagd: 0 of 40 evaluations on (asked for 0 %)", autonomy: read-only}
-    - {at: 2026-10-11T01:32:29Z, action: "start svcdesk-canary with the candidate at weight 0", autonomy: closed-loop}
-    - {at: 2026-10-11T01:32:33Z, action: "set weights 0/100: the candidate serves every user, dark (flag off)", autonomy: closed-loop}
-    - {at: 2026-10-11T01:32:33Z, action: "flag svcdesk-2-1: 0 % -> 10 % (step 1)", autonomy: closed-loop}
-    - {at: 2026-10-11T01:32:34Z, action: "read flag svcdesk-2-1 back from flagd: 9 of 40 evaluations on (asked for 10 %)", autonomy: read-only}
-    - {at: 2026-10-11T01:32:34Z, action: "flag 10 %: read the canary's and the stable build's search counters from Prometheus (phase start)", autonomy: read-only}
-    - {at: 2026-10-11T01:33:15Z, action: "flag svcdesk-2-1: 10 % -> 0 % (roll back: every search on 2.0.0's path)", autonomy: closed-loop}
-    - {at: 2026-10-11T01:33:16Z, action: "read flag svcdesk-2-1 back from flagd: 0 of 40 evaluations on (asked for 0 %)", autonomy: read-only}
-    - {at: 2026-10-11T01:33:16Z, action: "set weights 100/0 (roll back: the stable build serves every request)", autonomy: closed-loop}
+    - {at: 2026-10-11T16:55:44Z, action: "start svcdesk-canary with the candidate at weight 0", autonomy: closed-loop}
+    - {at: 2026-10-11T16:55:45Z, action: "set weights 0/0/100: the shadow phase (users on 2.0.0 through nginx, a copy to the candidate)", autonomy: closed-loop}
+    - {at: 2026-10-11T16:55:45Z, action: "shadow: read the canary's and the stable build's search counters from Prometheus (phase start)", autonomy: read-only}
+    - {at: 2026-10-11T16:55:56Z, action: "set weights 100/0 (roll back: the stable build serves every request)", autonomy: closed-loop}
 ---
 # Change record
 
@@ -48,4 +42,4 @@ hang (q = 1, c = 0, D = the 12 s stall rule + a scrape + a look, about 22 s) abo
 What my gate cannot see: a candidate that breaks only routes other than /kb/search, and a fault that starts after
 promotion.
 
-This run: candidate itsmlab.local/lab6-candidate:a31685f87c87, strategy flag.
+This run: candidate itsmlab.local/lab6-candidate:eff061e99e51, strategy canary.

@@ -1,0 +1,22 @@
+16:54:34 candidate itsmlab.local/lab6-candidate:0eddfd06ab54, stable ghcr.io/swasik/svcdesk-v2-seeded:2.0.0, strategy canary
+16:54:34 config: SLO window 28d; availability 0.995 (max burn 10); latency 0.99 under 0.3s (max burn 10); min_requests 150; interval 5s; timeout 165s; steps 10 50 % for 45 20 s
+16:54:34 Prometheus http://prometheus:9090; Caddy admin http://edge:2019
+16:54:34 gate: availability fails above 5 % 5xx, latency above 10 % slower than 0.3s (le="0.3"); min_bad 5; stall 12s
+16:54:34 weights now 100 0 0
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Recreate 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Recreated 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Starting 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Started 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Waiting 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Healthy 
+16:54:35 svcdesk-canary runs itsmlab.local/lab6-candidate:0eddfd06ab54
+16:54:35 action [closed-loop] start svcdesk-canary with the candidate at weight 0
+16:54:35 weights now 0 0 100
+16:54:35 action [closed-loop] set weights 0/0/100: the shadow phase (users on 2.0.0 through nginx, a copy to the candidate)
+16:54:36 action [read-only] shadow: read the canary's and the stable build's search counters from Prometheus (phase start)
+16:54:41 shadow t+5s: canary n=0 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=200 5xx 0.0 % slow 0.0 %
+16:54:46 shadow t+10s: canary n=111 5xx=0 (0.0 %) slow=36 (32.4 %) | control n=399 5xx 0.0 % slow 0.0 %
+16:54:46 weights now 100 0 0
+16:54:46 action [closed-loop] set weights 100/0 (roll back: the stable build serves every request)
+16:54:46 record: /tmp/itsmlab6-iy53vtjq/run-3-rc.3/record/CHANGE.md
+16:54:46 outcome: rolled-back - shadow: latency - 36 of 111 canary searches slower than 0.3s (32.4 %) against a 10.0 % threshold (stable 0.0 %) (12 s)

@@ -1,0 +1,48 @@
+16:52:11 candidate itsmlab.local/lab6-candidate:c268db072966, stable ghcr.io/swasik/svcdesk-v2-seeded:2.0.0, strategy canary
+16:52:11 config: SLO window 28d; availability 0.995 (max burn 10); latency 0.99 under 0.3s (max burn 10); min_requests 150; interval 5s; timeout 165s; steps 10 50 % for 45 20 s
+16:52:11 Prometheus http://prometheus:9090; Caddy admin http://edge:2019
+16:52:11 gate: availability fails above 5 % 5xx, latency above 10 % slower than 0.3s (le="0.3"); min_bad 5; stall 12s
+16:52:11 weights now 100 0 0
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Recreate 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Recreated 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Starting 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Started 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Waiting 
+ Container itsmlab6-d0436bea-svcdesk-canary-1 Healthy 
+16:52:12 svcdesk-canary runs itsmlab.local/lab6-candidate:c268db072966
+16:52:12 action [closed-loop] start svcdesk-canary with the candidate at weight 0
+16:52:12 weights now 0 0 100
+16:52:12 action [closed-loop] set weights 0/0/100: the shadow phase (users on 2.0.0 through nginx, a copy to the candidate)
+16:52:13 action [read-only] shadow: read the canary's and the stable build's search counters from Prometheus (phase start)
+16:52:18 shadow t+5s: canary n=0 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=399 5xx 0.0 % slow 0.0 %
+16:52:23 shadow t+10s: canary n=141 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=598 5xx 0.0 % slow 0.0 %
+16:52:28 shadow t+15s: canary n=340 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=799 5xx 0.0 % slow 0.0 %
+16:52:28 action [read-only] shadow: 3 reads of the canary's SLIs from Prometheus; passed with 340 searches
+16:52:28 shadow passed: 340 canary searches, 5xx 0.0 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 3 looks
+16:52:28 weights now 90 10 0
+16:52:28 action [closed-loop] set weights 90/10
+16:52:29 action [read-only] step 1 at 10 %: read the canary's and the stable build's search counters from Prometheus (phase start)
+16:52:34 step 1 at 10 % t+5s: canary n=311 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=200 5xx 0.0 % slow 0.0 %
+16:52:39 step 1 at 10 % t+10s: canary n=331 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=381 5xx 0.3 % slow 0.0 %
+16:52:44 step 1 at 10 % t+15s: canary n=351 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=559 5xx 0.2 % slow 0.0 %
+16:52:50 step 1 at 10 % t+21s: canary n=371 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=740 5xx 0.1 % slow 0.0 %
+16:52:55 step 1 at 10 % t+26s: canary n=391 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=921 5xx 0.1 % slow 0.0 %
+16:53:00 step 1 at 10 % t+31s: canary n=411 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1101 5xx 0.1 % slow 0.0 %
+16:53:05 step 1 at 10 % t+36s: canary n=430 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1280 5xx 0.1 % slow 0.0 %
+16:53:11 step 1 at 10 % t+42s: canary n=451 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1460 5xx 0.2 % slow 0.0 %
+16:53:16 step 1 at 10 % t+47s: canary n=471 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=1640 5xx 0.2 % slow 0.0 %
+16:53:16 action [read-only] step 1 at 10 %: 9 reads of the canary's SLIs from Prometheus; passed with 471 searches
+16:53:16 step 1 at 10 % passed: 471 canary searches, 5xx 0.0 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 9 looks
+16:53:16 weights now 50 50 0
+16:53:16 action [closed-loop] set weights 50/50
+16:53:16 action [read-only] step 2 at 50 %: read the canary's and the stable build's search counters from Prometheus (phase start)
+16:53:21 step 2 at 50 % t+5s: canary n=19 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=180 5xx 0.0 % slow 0.0 %
+16:53:27 step 2 at 50 % t+11s: canary n=120 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=310 5xx 0.0 % slow 0.0 %
+16:53:32 step 2 at 50 % t+16s: canary n=220 5xx=0 (0.0 %) slow=0 (0.0 %) | control n=410 5xx 0.0 % slow 0.0 %
+16:53:37 step 2 at 50 % t+21s: canary n=320 5xx=1 (0.3 %) slow=0 (0.0 %) | control n=510 5xx 0.2 % slow 0.0 %
+16:53:37 action [read-only] step 2 at 50 %: 4 reads of the canary's SLIs from Prometheus; passed with 320 searches
+16:53:37 step 2 at 50 % passed: 320 canary searches, 5xx 0.3 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 4 looks
+16:53:37 weights now 0 100 0
+16:53:37 action [closed-loop] set weights 0/100 (promote: the candidate serves every request)
+16:53:37 record: /tmp/itsmlab6-iy53vtjq/run-2-rc.2/record/CHANGE.md
+16:53:37 outcome: promoted - every step passed: step 2 at 50 % passed: 320 canary searches, 5xx 0.3 % (<= 5.0 %), slow 0.0 % (<= 10.0 %), 4 looks (86 s)

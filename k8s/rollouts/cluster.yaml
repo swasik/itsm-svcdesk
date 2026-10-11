@@ -20,7 +20,7 @@ spec:
           image: ghcr.io/swasik/seeded-toxic:2026
           imagePullPolicy: IfNotPresent
           env:
-            - {name: SEEDED_TOXIC_LOGIN, value: itsm-reference}     # my kb-index profile (itsmlab.yaml login)
+            - {name: SEEDED_TOXIC_LOGIN, value: itsm-reference}     # the kb-index profile of my Lab 3 stack, the one the evidence/ runs used
           ports:
             - {name: http, containerPort: 8080}
 ---
