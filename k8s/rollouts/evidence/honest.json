@@ -1,0 +1,498 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Rollout",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Rollout\",\"metadata\":{\"annotations\":{},\"name\":\"svcdesk\",\"namespace\":\"default\"},\"spec\":{\"replicas\":10,\"revisionHistoryLimit\":2,\"selector\":{\"matchLabels\":{\"app\":\"svcdesk\"}},\"strategy\":{\"canary\":{\"analysis\":{\"args\":[{\"name\":\"canary-hash\",\"valueFrom\":{\"podTemplateHashValue\":\"Latest\"}}],\"startingStep\":1,\"templates\":[{\"templateName\":\"svcdesk-slo\"}]},\"steps\":[{\"setWeight\":10},{\"pause\":{\"duration\":\"45s\"}},{\"setWeight\":50},{\"pause\":{\"duration\":\"20s\"}}]}},\"template\":{\"metadata\":{\"labels\":{\"app\":\"svcdesk\"}},\"spec\":{\"containers\":[{\"env\":[{\"name\":\"KB_INDEX_URL\",\"value\":\"http://kb-index:8080\"},{\"name\":\"SVCDESK_BUCKETS\",\"value\":\"0.005,0.01,0.025,0.05,0.1,0.15,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.3,0.4,0.5,1,2.5,5\"}],\"image\":\"ghcr.io/swasik/svcdesk-v2-seeded:2.0.0\",\"imagePullPolicy\":\"IfNotPresent\",\"lifecycle\":{\"preStop\":{\"sleep\":{\"seconds\":5}}},\"name\":\"svcdesk\",\"ports\":[{\"containerPort\":8080,\"name\":\"http\"}],\"readinessProbe\":{\"httpGet\":{\"path\":\"/health\",\"port\":\"http\"}}}]}}}}\n",
+                    "rollout.argoproj.io/revision": "2"
+                },
+                "creationTimestamp": "2026-10-11T07:26:26Z",
+                "generation": 3,
+                "name": "svcdesk",
+                "namespace": "default",
+                "resourceVersion": "2596",
+                "uid": "ad976a35-6a76-43fc-9f33-fd6eb7710c48"
+            },
+            "spec": {
+                "replicas": 10,
+                "revisionHistoryLimit": 2,
+                "selector": {
+                    "matchLabels": {
+                        "app": "svcdesk"
+                    }
+                },
+                "strategy": {
+                    "canary": {
+                        "analysis": {
+                            "args": [
+                                {
+                                    "name": "canary-hash",
+                                    "valueFrom": {
+                                        "podTemplateHashValue": "Latest"
+                                    }
+                                }
+                            ],
+                            "startingStep": 1,
+                            "templates": [
+                                {
+                                    "templateName": "svcdesk-slo"
+                                }
+                            ]
+                        },
+                        "steps": [
+                            {
+                                "setWeight": 10
+                            },
+                            {
+                                "pause": {
+                                    "duration": "45s"
+                                }
+                            },
+                            {
+                                "setWeight": 50
+                            },
+                            {
+                                "pause": {
+                                    "duration": "20s"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "app": "svcdesk"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "env": [
+                                    {
+                                        "name": "KB_INDEX_URL",
+                                        "value": "http://kb-index:8080"
+                                    },
+                                    {
+                                        "name": "SVCDESK_BUCKETS",
+                                        "value": "0.005,0.01,0.025,0.05,0.1,0.15,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.3,0.4,0.5,1,2.5,5"
+                                    }
+                                ],
+                                "image": "ghcr.io/swasik/svcdesk-v2-seeded:2.1.0-rc.2",
+                                "imagePullPolicy": "IfNotPresent",
+                                "lifecycle": {
+                                    "preStop": {
+                                        "sleep": {
+                                            "seconds": 5
+                                        }
+                                    }
+                                },
+                                "name": "svcdesk",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "name": "http",
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "readinessProbe": {
+                                    "httpGet": {
+                                        "path": "/health",
+                                        "port": "http"
+                                    }
+                                },
+                                "resources": {}
+                            }
+                        ]
+                    }
+                }
+            },
+            "status": {
+                "HPAReplicas": 10,
+                "availableReplicas": 10,
+                "blueGreen": {},
+                "canary": {},
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-11T07:28:13Z",
+                        "lastUpdateTime": "2026-10-11T07:28:13Z",
+                        "message": "Rollout is paused",
+                        "reason": "RolloutPaused",
+                        "status": "False",
+                        "type": "Paused"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-11T07:28:14Z",
+                        "lastUpdateTime": "2026-10-11T07:28:14Z",
+                        "message": "Rollout has minimum availability",
+                        "reason": "AvailableReason",
+                        "status": "True",
+                        "type": "Available"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-11T07:28:14Z",
+                        "lastUpdateTime": "2026-10-11T07:28:14Z",
+                        "message": "RolloutCompleted",
+                        "reason": "RolloutCompleted",
+                        "status": "True",
+                        "type": "Completed"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-11T07:28:14Z",
+                        "lastUpdateTime": "2026-10-11T07:28:14Z",
+                        "message": "Rollout is healthy",
+                        "reason": "RolloutHealthy",
+                        "status": "True",
+                        "type": "Healthy"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-11T07:28:13Z",
+                        "lastUpdateTime": "2026-10-11T07:28:14Z",
+                        "message": "ReplicaSet \"svcdesk-7c4b9bf6b9\" has successfully progressed.",
+                        "reason": "NewReplicaSetAvailable",
+                        "status": "True",
+                        "type": "Progressing"
+                    }
+                ],
+                "currentPodHash": "7c4b9bf6b9",
+                "currentStepHash": "fc469cbc4",
+                "currentStepIndex": 4,
+                "observedGeneration": "3",
+                "phase": "Healthy",
+                "readyReplicas": 10,
+                "replicas": 10,
+                "selector": "app=svcdesk",
+                "stableRS": "7c4b9bf6b9",
+                "updatedReplicas": 10
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "AnalysisRun",
+            "metadata": {
+                "annotations": {
+                    "rollout.argoproj.io/revision": "2"
+                },
+                "creationTimestamp": "2026-10-11T07:27:07Z",
+                "generation": 14,
+                "labels": {
+                    "app": "svcdesk",
+                    "rollout-type": "Background",
+                    "rollouts-pod-template-hash": "7c4b9bf6b9"
+                },
+                "name": "svcdesk-7c4b9bf6b9-2",
+                "namespace": "default",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "argoproj.io/v1alpha1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Rollout",
+                        "name": "svcdesk",
+                        "uid": "ad976a35-6a76-43fc-9f33-fd6eb7710c48"
+                    }
+                ],
+                "resourceVersion": "2593",
+                "uid": "2d5017da-5b2f-4f1c-84cc-0812739c22db"
+            },
+            "spec": {
+                "args": [
+                    {
+                        "name": "canary-hash",
+                        "value": "7c4b9bf6b9"
+                    }
+                ],
+                "metrics": [
+                    {
+                        "failureLimit": 0,
+                        "initialDelay": "20s",
+                        "interval": "5s",
+                        "name": "availability",
+                        "provider": {
+                            "prometheus": {
+                                "address": "http://prometheus.monitoring.svc:9090",
+                                "authentication": {
+                                    "oauth2": {},
+                                    "sigv4": {}
+                                },
+                                "query": "(sum(rate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"{{args.canary-hash}}\", http_route=\"/kb/search\", http_response_status_code=~\"5..\"}[30s])) or vector(0))\n/\nsum(rate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"{{args.canary-hash}}\", http_route=\"/kb/search\"}[30s]))\n"
+                            }
+                        },
+                        "successCondition": "len(result) == 1 \u0026\u0026 !isNaN(result[0]) \u0026\u0026 result[0] \u003c= 0.05"
+                    },
+                    {
+                        "failureLimit": 0,
+                        "initialDelay": "20s",
+                        "interval": "5s",
+                        "name": "latency",
+                        "provider": {
+                            "prometheus": {
+                                "address": "http://prometheus.monitoring.svc:9090",
+                                "authentication": {
+                                    "oauth2": {},
+                                    "sigv4": {}
+                                },
+                                "query": "1 - sum(rate(http_server_request_duration_seconds_bucket{job=\"svcdesk\", rollouts_pod_template_hash=\"{{args.canary-hash}}\", http_route=\"/kb/search\", le=\"0.3\"}[30s]))\n  / sum(rate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"{{args.canary-hash}}\", http_route=\"/kb/search\"}[30s]))\n"
+                            }
+                        },
+                        "successCondition": "len(result) == 1 \u0026\u0026 !isNaN(result[0]) \u0026\u0026 result[0] \u003c= 0.10"
+                    },
+                    {
+                        "failureLimit": 0,
+                        "initialDelay": "20s",
+                        "interval": "5s",
+                        "name": "throughput",
+                        "provider": {
+                            "prometheus": {
+                                "address": "http://prometheus.monitoring.svc:9090",
+                                "authentication": {
+                                    "oauth2": {},
+                                    "sigv4": {}
+                                },
+                                "query": "min(sum by (pod) (irate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"{{args.canary-hash}}\", http_route=\"/kb/search\"}[15s])))\n"
+                            }
+                        },
+                        "successCondition": "len(result) == 1 \u0026\u0026 !isNaN(result[0]) \u0026\u0026 result[0] \u003e= 0.5"
+                    }
+                ],
+                "terminate": true
+            },
+            "status": {
+                "completedAt": "2026-10-11T07:28:14Z",
+                "dryRunSummary": {},
+                "message": "Run Terminated",
+                "metricResults": [
+                    {
+                        "consecutiveSuccess": 10,
+                        "count": 10,
+                        "measurements": [
+                            {
+                                "finishedAt": "2026-10-11T07:27:27Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:27Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:32Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:32Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:37Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:37Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:42Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:42Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:47Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:47Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:52Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:52Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:57Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:57Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:02Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:02Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:07Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:07Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:12Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:12Z",
+                                "value": "[0]"
+                            }
+                        ],
+                        "metadata": {
+                            "ResolvedPrometheusQuery": "(sum(rate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"7c4b9bf6b9\", http_route=\"/kb/search\", http_response_status_code=~\"5..\"}[30s])) or vector(0))\n/\nsum(rate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"7c4b9bf6b9\", http_route=\"/kb/search\"}[30s]))\n"
+                        },
+                        "name": "availability",
+                        "phase": "Successful",
+                        "successful": 10
+                    },
+                    {
+                        "consecutiveSuccess": 10,
+                        "count": 10,
+                        "measurements": [
+                            {
+                                "finishedAt": "2026-10-11T07:27:27Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:27Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:32Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:32Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:37Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:37Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:42Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:42Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:47Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:47Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:52Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:52Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:57Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:57Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:02Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:02Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:07Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:07Z",
+                                "value": "[0]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:12Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:12Z",
+                                "value": "[0]"
+                            }
+                        ],
+                        "metadata": {
+                            "ResolvedPrometheusQuery": "1 - sum(rate(http_server_request_duration_seconds_bucket{job=\"svcdesk\", rollouts_pod_template_hash=\"7c4b9bf6b9\", http_route=\"/kb/search\", le=\"0.3\"}[30s]))\n  / sum(rate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"7c4b9bf6b9\", http_route=\"/kb/search\"}[30s]))\n"
+                        },
+                        "name": "latency",
+                        "phase": "Successful",
+                        "successful": 10
+                    },
+                    {
+                        "consecutiveSuccess": 10,
+                        "count": 10,
+                        "measurements": [
+                            {
+                                "finishedAt": "2026-10-11T07:27:27Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:27Z",
+                                "value": "[2.6]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:32Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:32Z",
+                                "value": "[4.6]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:37Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:37Z",
+                                "value": "[3.4]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:42Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:42Z",
+                                "value": "[2.8]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:47Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:47Z",
+                                "value": "[3]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:52Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:52Z",
+                                "value": "[3.8]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:27:57Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:27:57Z",
+                                "value": "[5]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:02Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:02Z",
+                                "value": "[3.6]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:07Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:07Z",
+                                "value": "[2.8]"
+                            },
+                            {
+                                "finishedAt": "2026-10-11T07:28:12Z",
+                                "phase": "Successful",
+                                "startedAt": "2026-10-11T07:28:12Z",
+                                "value": "[3]"
+                            }
+                        ],
+                        "metadata": {
+                            "ResolvedPrometheusQuery": "min(sum by (pod) (irate(http_server_request_duration_seconds_count{job=\"svcdesk\", rollouts_pod_template_hash=\"7c4b9bf6b9\", http_route=\"/kb/search\"}[15s])))\n"
+                        },
+                        "name": "throughput",
+                        "phase": "Successful",
+                        "successful": 10
+                    }
+                ],
+                "phase": "Successful",
+                "runSummary": {
+                    "count": 3,
+                    "successful": 3
+                },
+                "startedAt": "2026-10-11T07:27:07Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

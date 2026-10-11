@@ -1,0 +1,11 @@
+# ai-generated: 0% - the course's file, unchanged (run with --name fresh-lab6 on this machine)
+# k8s/rollouts/kind-config.yaml - Stretch 3 (RELEASE-SPEC.md R-32), for kind v0.33.0:
+#   kind create cluster --config k8s/rollouts/kind-config.yaml
+# The node image is pinned: kind v0.33.0 defaults to Kubernetes 1.37, and Argo Rollouts v1.10.0 is tested on 1.32 to
+# 1.35. Keep the image line exactly as it is; the checker compares it.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: itsm-lab6
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0

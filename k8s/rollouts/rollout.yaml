@@ -1,0 +1,55 @@
+# ai-generated: 20% - the course's example; I set my ladder, my kb-index and my plan (deploy.config.yaml steps), an AI assistant checked them
+# k8s/rollouts/rollout.yaml - Stretch 3 (RELEASE-SPEC.md R-32): an Argo Rollouts v1.10.0 canary of svcdesk-v2-seeded.
+# A minimal example with the structure R-32 checks: a canary strategy with at least two setWeight steps and an
+# analysis that references analysistemplate.yaml. 
+#
+# Without a traffic router (a service mesh or an ingress controller), Argo Rollouts approximates a weight by the
+# share of pods: with 10 replicas, setWeight 10 is one candidate pod of ten, and a Service over all the pods sends it
+# a tenth of the requests - if every request opens its own connection (see the stretch README). A release:
+#   kubectl argo rollouts set image svcdesk svcdesk=ghcr.io/swasik/svcdesk-v2-seeded:2.1.0-rc.1
+#   kubectl argo rollouts get rollout svcdesk --watch
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: svcdesk
+spec:
+  replicas: 10                                                # weights are whole pods: 10 % needs 10 replicas
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: svcdesk
+  template:
+    metadata:
+      labels:
+        app: svcdesk
+    spec:
+      containers:
+        - name: svcdesk
+          image: ghcr.io/swasik/svcdesk-v2-seeded:2.0.0      # the stable build; the node pulls the published tags
+          imagePullPolicy: IfNotPresent
+          ports:
+            - {name: http, containerPort: 8080}
+          env:                                                # not SVCDESK_V2_FLAGS_URL: with no flagd, every candidate is 2.0.0
+            - {name: KB_INDEX_URL, value: "http://kb-index:8080"}           # cluster.yaml: kb-index with my login (itsm-reference)
+            - {name: SVCDESK_BUCKETS, value: "0.005,0.01,0.025,0.05,0.1,0.15,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.3,0.4,0.5,1,2.5,5"}   # my ladder, as in release/compose.yml
+          readinessProbe:                                     # /health stays green on a hung candidate (R-30):
+            httpGet: {path: /health, port: http}              # readiness is not a gate
+          lifecycle:
+            preStop:                                          # svcdesk stops accepting at SIGTERM, before kube-proxy has
+              sleep: {seconds: 5}                             # dropped the pod: without this every scale-down fails a few
+                                                              # users' searches (measured)
+  strategy:
+    canary:
+      analysis:                                               # a background analysis, from step 1 (the first pause) on
+        templates:
+          - templateName: svcdesk-slo
+        startingStep: 1
+        args:
+          - name: canary-hash                                 # the candidate pods' rollouts-pod-template-hash label
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:                                                  # my plan: deploy.config.yaml's steps, 10 % for 45 s, 50 % for 20 s, then promote
+        - setWeight: 10
+        - pause: {duration: 45s}
+        - setWeight: 50
+        - pause: {duration: 20s}

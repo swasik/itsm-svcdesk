@@ -1,0 +1,63 @@
+# ai-generated: 20% - the course's example; I set my gate's thresholds (5 %, 10 % at 0.3 s), interval, failureLimit and floor, an AI assistant checked the arithmetic
+# k8s/rollouts/analysistemplate.yaml - Stretch 3 (RELEASE-SPEC.md R-32): one Prometheus metric per SLI, plus the
+# throughput floor that catches a hang. What R-32 checks here: each SLI's condition compares with the same threshold
+# as deploy.config.yaml's gate (to 1e-6), each metric has an explicit failureLimit, and no condition passes on an
+# empty or NaN result.
+#
+# No data is a failure. Argo's Prometheus provider hands the condition the query's vector as `result`; an empty
+# vector (no series) and NaN (0/0: no searches in the window) both mean "no data", and `len(result) == 1 &&
+# !isNaN(result[0])` makes both a failed measurement. A sum over no 5xx series is empty, not 0, so a healthy canary
+# with no error at all would read as "no data" too - hence `or vector(0)` on the numerator only.
+#
+# Three traps, all measured on kind with this recipe (30 September 2026):
+# - The canary pod is ready about 1 s after setWeight, and a measurement at once reads [] and aborts an honest
+#   release: initialDelay gives Prometheus the two scrapes of the new pod that rate() needs.
+# - A hung candidate is never observed, so its 5xx and latency shares stay 0: a template with the two SLIs alone
+#   promoted the hang. The throughput metric reads the slowest candidate pod's answers per second; a hung pod reads 0.
+# - rate() divides a young pod's few seconds of counts by the whole range (an honest pod read 1.8/s just after
+#   setWeight 50); irate() uses the last two scrapes only.
+#
+# Your in-cluster Prometheus must scrape every svcdesk pod every 5 s in job "svcdesk" and keep the pod labels
+# rollouts-pod-template-hash (as rollouts_pod_template_hash) and the pod name (as pod): see the stretch README.
+# The windows must fit inside a step, as in your deploy.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: svcdesk-slo
+spec:
+  args:
+    - name: canary-hash
+  metrics:
+    - name: availability
+      initialDelay: 20s
+      interval: 5s                                            # my gate.interval
+      failureLimit: 0                                         # one bad measurement aborts, as my deploy.sh's gate
+      successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] <= 0.05   # 10 x (1 - 0.995) = 0.05
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring.svc:9090      # cluster.yaml's Prometheus
+          query: |
+            (sum(rate(http_server_request_duration_seconds_count{job="svcdesk", rollouts_pod_template_hash="{{args.canary-hash}}", http_route="/kb/search", http_response_status_code=~"5.."}[30s])) or vector(0))
+            /
+            sum(rate(http_server_request_duration_seconds_count{job="svcdesk", rollouts_pod_template_hash="{{args.canary-hash}}", http_route="/kb/search"}[30s]))
+    - name: latency
+      initialDelay: 20s
+      interval: 5s
+      failureLimit: 0                                         # one bad measurement aborts
+      successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] <= 0.10   # 10 x (1 - 0.99) = 0.10
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring.svc:9090
+          query: |                                            # le = 0.3, my threshold_seconds, as Prometheus stores it
+            1 - sum(rate(http_server_request_duration_seconds_bucket{job="svcdesk", rollouts_pod_template_hash="{{args.canary-hash}}", http_route="/kb/search", le="0.3"}[30s]))
+              / sum(rate(http_server_request_duration_seconds_count{job="svcdesk", rollouts_pod_template_hash="{{args.canary-hash}}", http_route="/kb/search"}[30s]))
+    - name: throughput                                        # 40 searches/s over 10 pods is 4 per pod at every step
+      initialDelay: 20s
+      interval: 5s
+      failureLimit: 0                                         # one bad measurement aborts
+      successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] >= 0.5    # a hung pod reads 0, a live one about 4
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring.svc:9090
+          query: |
+            min(sum by (pod) (irate(http_server_request_duration_seconds_count{job="svcdesk", rollouts_pod_template_hash="{{args.canary-hash}}", http_route="/kb/search"}[15s])))

@@ -1,0 +1,126 @@
+# ai-generated: 70% - an AI assistant wrote it from the stretch README's notes; I checked the login, the ladder and the scrape labels
+# k8s/rollouts/cluster.yaml - Stretch 3 (R-32): the rest of the cluster around rollout.yaml - kb-index with my login,
+# the Service svcdesk over every pod labelled app=svcdesk, and an in-cluster Prometheus (namespace monitoring) that
+# scrapes every svcdesk pod every 5 s and keeps the two pod labels analysistemplate.yaml selects by.
+#   kubectl apply -f k8s/rollouts/cluster.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kb-index
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: kb-index}
+  template:
+    metadata:
+      labels: {app: kb-index}
+    spec:
+      containers:
+        - name: kb-index
+          image: ghcr.io/swasik/seeded-toxic:2026
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: SEEDED_TOXIC_LOGIN, value: itsm-reference}     # my kb-index profile (itsmlab.yaml login)
+          ports:
+            - {name: http, containerPort: 8080}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kb-index
+spec:
+  selector: {app: kb-index}
+  ports:
+    - {name: http, port: 8080, targetPort: http}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svcdesk
+spec:
+  selector: {app: svcdesk}            # stable and canary pods alike: the share of pods is the weight
+  ports:
+    - {name: http, port: 8080, targetPort: http}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-pods
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-pods
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: prometheus-pods}
+subjects:
+  - {kind: ServiceAccount, name: prometheus, namespace: monitoring}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+    scrape_configs:
+      - job_name: svcdesk
+        scrape_interval: 5s
+        kubernetes_sd_configs: [{role: pod, namespaces: {names: [default]}}]
+        relabel_configs:
+          - {source_labels: [__meta_kubernetes_pod_label_app, __meta_kubernetes_pod_container_port_name], regex: svcdesk;http, action: keep}
+          - {source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash], target_label: rollouts_pod_template_hash}
+          - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: prometheus}
+  template:
+    metadata:
+      labels: {app: prometheus}
+    spec:
+      serviceAccountName: prometheus
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v3.15.0
+          imagePullPolicy: IfNotPresent
+          args: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=2h]
+          ports:
+            - {name: http, containerPort: 9090}
+          volumeMounts:
+            - {name: config, mountPath: /etc/prometheus}
+      volumes:
+        - name: config
+          configMap: {name: prometheus}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector: {app: prometheus}
+  ports:
+    - {name: http, port: 9090, targetPort: http}
