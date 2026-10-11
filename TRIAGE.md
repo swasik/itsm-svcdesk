@@ -3,13 +3,12 @@ lab5_triage:
   image: ghcr.io/fresh-student/itsm-svcdesk@sha256:1ddb8dbea9f0013547566b7dd8d6805186f6362116b38824dd88a6ab22b92c0e
   sarif_receipt: 0
 ---
-<!-- ai-generated: 100% - Claude Code (fresh-solution run) triaged the local scanner runs and wrote this file -->
+<!-- ai-generated: 100% - Claude Code (hosted test run) triaged the pipeline's runs and wrote this file -->
 # Triage
 
 What the gates and the reporting scanners found on my service, and what I did about each (CI-SPEC.md P-11, P-12).
-One row per rule of one tool. This run of the lab was offline: the pipeline's jobs were executed locally with the
-same pinned scanner images and commands as the composite actions, so the `image:` above is the local image id of
-the build of M (nothing was pushed to GHCR) and `sarif_receipt` is 0 (no receipt was filed).
+One row per rule of one tool. The rows come from the pipeline's runs on GitHub (the image job's Trivy gate, and the
+reporting scanners' SARIF of the canary run, results outside `lab5-canary/`).
 
 | Tool | Rule | Decision | Reason |
 |---|---|---|---|
