@@ -1,6 +1,6 @@
 ---
 lab5_triage:
-  image: ghcr.io/fresh-student/itsm-svcdesk@sha256:1ddb8dbea9f0013547566b7dd8d6805186f6362116b38824dd88a6ab22b92c0e
+  image: ghcr.io/swasik/itsm-svcdesk@sha256:f81832ce5b5110a8ee3bc2b85d27863a851feecde5c2c13089a2e6b44383e934
   sarif_receipt: 0
 ---
 <!-- ai-generated: 100% - Claude Code (hosted test run) triaged the pipeline's runs and wrote this file -->
@@ -8,7 +8,9 @@ lab5_triage:
 
 What the gates and the reporting scanners found on my service, and what I did about each (CI-SPEC.md P-11, P-12).
 One row per rule of one tool. The rows come from the pipeline's runs on GitHub (the image job's Trivy gate, and the
-reporting scanners' SARIF of the canary run, results outside `lab5-canary/`).
+reporting scanners' SARIF of the canary run, results outside `lab5-canary/`). The six Trivy rows were found before
+the first push, by the same Trivy image gate run locally on the untriaged image; the first run on GitHub (with the
+triaged Dockerfile) was green, and its image is the digest above.
 
 | Tool | Rule | Decision | Reason |
 |---|---|---|---|
