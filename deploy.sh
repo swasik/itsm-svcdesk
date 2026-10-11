@@ -420,14 +420,33 @@ log "gate: availability fails above $(calc "$AVAIL_THR * 100") % 5xx, latency ab
 
 SEARCH='job="svcdesk", http_route="/kb/search"'
 
-# counter <track> <extra matchers> <kind: all|5xx|fast>: the absolute counter, summed over the track's series.
+# All the counters of one look are read at ONE evaluation instant, 2 s in the past: six separate queries at "now"
+# can straddle a scrape, and then a count and its le bucket come from different scrapes - a whole scrape's worth of
+# searches (200 in the shadow) would read as slow. A scrape's samples share one timestamp and land together, so
+# every query at the same past instant sees the same scrapes.
+EVAL_AT=""
+prom_query_at() {
+  local body n value
+  body=$(curl -sS --fail-with-body --max-time 5 "${PROMETHEUS_URL%/}/api/v1/query" --data-urlencode "query=$1" \
+    --data-urlencode "time=$EVAL_AT" 2>&1) \
+    || { log "prom_query_at: no answer from $PROMETHEUS_URL, or an error: ${body:0:300}"; return 1; }
+  [[ $(jq -r '.status' <<<"$body" 2>/dev/null) == success ]] || { log "prom_query_at: ${body:0:300}"; return 1; }
+  n=$(jq '.data.result | length' <<<"$body")
+  (( n == 0 )) && return 2
+  (( n == 1 )) || { log "prom_query_at: $n series, expected one: $1"; return 1; }
+  value=$(jq -r '.data.result[0].value[1]' <<<"$body")
+  [[ $value == NaN ]] && return 2
+  printf '%s\n' "$value"
+}
+
+# counter <track> <extra matchers> <kind: all|5xx|fast>: the absolute counter at EVAL_AT, summed over the track.
 counter() {
   local track=$1 extra=$2 kind=$3 sel
   sel="$SEARCH, track=\"$track\"${extra:+, $extra}"
   case $kind in
-    all) prom_query "sum(http_server_request_duration_seconds_count{$sel}) or vector(0)" ;;
-    5xx) prom_query "sum(http_server_request_duration_seconds_count{$sel, http_response_status_code=~\"5..\"}) or vector(0)" ;;
-    fast) prom_query "sum(http_server_request_duration_seconds_bucket{$sel, le=\"$LE\"}) or vector(0)" ;;
+    all) prom_query_at "sum(http_server_request_duration_seconds_count{$sel}) or vector(0)" ;;
+    5xx) prom_query_at "sum(http_server_request_duration_seconds_count{$sel, http_response_status_code=~\"5..\"}) or vector(0)" ;;
+    fast) prom_query_at "sum(http_server_request_duration_seconds_bucket{$sel, le=\"$LE\"}) or vector(0)" ;;
   esac
 }
 
@@ -438,6 +457,7 @@ read_counters() {
   if [[ $mode == flag ]]; then
     c_extra='feature_flag_variant="on"'; s_track=canary; s_extra='feature_flag_variant="off"'
   fi
+  EVAL_AT=$(( $(now_s) - 2 ))
   C_N=$(counter canary "$c_extra" all) && C_5=$(counter canary "$c_extra" 5xx) && C_F=$(counter canary "$c_extra" fast) \
     && S_N=$(counter "$s_track" "$s_extra" all) && S_5=$(counter "$s_track" "$s_extra" 5xx) \
     && S_F=$(counter "$s_track" "$s_extra" fast) || return 1
