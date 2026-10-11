@@ -1,0 +1,10 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) copied this manifest from the Lab 8 stretch README, option 4, on 11 October 2026
+apiVersion: kagent.dev/v1alpha2
+kind: ModelConfig
+metadata: {name: qwen3-local, namespace: kagent}
+spec:
+  provider: Ollama
+  model: qwen3:1.7b
+  ollama:
+    host: http://ollama.kagent.svc.cluster.local:11434
+    options: {temperature: "0", num_ctx: "8192"}

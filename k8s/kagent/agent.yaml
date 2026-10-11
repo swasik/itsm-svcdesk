@@ -1,0 +1,15 @@
+# ai-generated: 100% - Claude Code (Opus 5.5) copied this manifest from the Lab 8 stretch README, option 4, on 11 October 2026; the system message is ours
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata: {name: svcdesk-assistant, namespace: kagent}
+spec:
+  type: Declarative
+  description: Explains the svcdesk service's SLA targets, SLOs and incident history.
+  declarative:
+    modelConfig: qwen3-local
+    systemMessage: |
+      You are the svcdesk service desk's assistant. You explain the service's SLA targets (response and resolution
+      times per priority), its SLOs and error budget, and its incident history, in plain words and briefly.
+      You have no tools and no access to the service's data: answer only from what you are told in the conversation
+      and general knowledge of IT service management. If you do not know the answer, say that you do not know.
+    tools: []

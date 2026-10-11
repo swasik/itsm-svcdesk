@@ -1,0 +1,141 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "kagent.dev/v1alpha2",
+            "kind": "Agent",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kagent.dev/v1alpha2\",\"kind\":\"Agent\",\"metadata\":{\"annotations\":{},\"name\":\"svcdesk-assistant\",\"namespace\":\"kagent\"},\"spec\":{\"declarative\":{\"modelConfig\":\"qwen3-local\",\"systemMessage\":\"You are the svcdesk service desk's assistant. You explain the service's SLA targets (response and resolution\\ntimes per priority), its SLOs and error budget, and its incident history, in plain words and briefly.\\nYou have no tools and no access to the service's data: answer only from what you are told in the conversation\\nand general knowledge of IT service management. If you do not know the answer, say that you do not know.\\n\",\"tools\":[]},\"description\":\"Explains the svcdesk service's SLA targets, SLOs and incident history.\",\"type\":\"Declarative\"}}\n"
+                },
+                "creationTimestamp": "2026-10-11T07:21:14Z",
+                "generation": 1,
+                "name": "svcdesk-assistant",
+                "namespace": "kagent",
+                "resourceVersion": "1016",
+                "uid": "24a6769a-833d-48b3-a1b5-ea370d875f74"
+            },
+            "spec": {
+                "declarative": {
+                    "modelConfig": "qwen3-local",
+                    "runtime": "go",
+                    "systemMessage": "You are the svcdesk service desk's assistant. You explain the service's SLA targets (response and resolution\ntimes per priority), its SLOs and error budget, and its incident history, in plain words and briefly.\nYou have no tools and no access to the service's data: answer only from what you are told in the conversation\nand general knowledge of IT service management. If you do not know the answer, say that you do not know.\n",
+                    "tools": []
+                },
+                "description": "Explains the svcdesk service's SLA targets, SLOs and incident history.",
+                "type": "Declarative"
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-11T07:21:14Z",
+                        "message": "Agent configuration accepted",
+                        "observedGeneration": 1,
+                        "reason": "Reconciled",
+                        "status": "True",
+                        "type": "Accepted"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-11T07:21:19Z",
+                        "message": "Deployment is ready",
+                        "observedGeneration": 1,
+                        "reason": "DeploymentReady",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "observedGeneration": 1
+            }
+        },
+        {
+            "apiVersion": "kagent.dev/v1alpha2",
+            "kind": "ModelConfig",
+            "metadata": {
+                "annotations": {
+                    "meta.helm.sh/release-name": "kagent",
+                    "meta.helm.sh/release-namespace": "kagent"
+                },
+                "creationTimestamp": "2026-10-11T07:19:11Z",
+                "generation": 1,
+                "labels": {
+                    "app.kubernetes.io/instance": "kagent",
+                    "app.kubernetes.io/managed-by": "Helm",
+                    "app.kubernetes.io/name": "kagent",
+                    "app.kubernetes.io/part-of": "kagent",
+                    "app.kubernetes.io/version": "0.10.2",
+                    "helm.sh/chart": "kagent-0.10.2"
+                },
+                "name": "default-model-config",
+                "namespace": "kagent",
+                "resourceVersion": "785",
+                "uid": "82760f78-3e25-4ee2-94a9-16632b309511"
+            },
+            "spec": {
+                "model": "qwen3:1.7b",
+                "ollama": {
+                    "host": "http://ollama.kagent.svc.cluster.local:11434",
+                    "options": {
+                        "num_ctx": "8192"
+                    }
+                },
+                "provider": "Ollama"
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-11T07:19:55Z",
+                        "message": "Model configuration accepted",
+                        "reason": "ModelConfigReconciled",
+                        "status": "True",
+                        "type": "Accepted"
+                    }
+                ],
+                "observedGeneration": 1,
+                "secretHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+        },
+        {
+            "apiVersion": "kagent.dev/v1alpha2",
+            "kind": "ModelConfig",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kagent.dev/v1alpha2\",\"kind\":\"ModelConfig\",\"metadata\":{\"annotations\":{},\"name\":\"qwen3-local\",\"namespace\":\"kagent\"},\"spec\":{\"model\":\"qwen3:1.7b\",\"ollama\":{\"host\":\"http://ollama.kagent.svc.cluster.local:11434\",\"options\":{\"num_ctx\":\"8192\",\"temperature\":\"0\"}},\"provider\":\"Ollama\"}}\n"
+                },
+                "creationTimestamp": "2026-10-11T07:21:14Z",
+                "generation": 1,
+                "name": "qwen3-local",
+                "namespace": "kagent",
+                "resourceVersion": "950",
+                "uid": "004f18f8-8d85-4310-bd33-1508092d53ce"
+            },
+            "spec": {
+                "model": "qwen3:1.7b",
+                "ollama": {
+                    "host": "http://ollama.kagent.svc.cluster.local:11434",
+                    "options": {
+                        "num_ctx": "8192",
+                        "temperature": "0"
+                    }
+                },
+                "provider": "Ollama"
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-11T07:21:14Z",
+                        "message": "Model configuration accepted",
+                        "reason": "ModelConfigReconciled",
+                        "status": "True",
+                        "type": "Accepted"
+                    }
+                ],
+                "observedGeneration": 1,
+                "secretHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
