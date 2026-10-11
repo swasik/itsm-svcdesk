@@ -1,8 +1,8 @@
-# ai-generated: 20% - the course's example file; the student chose the documents (own work for Labs 1-5 and 7, the checkpoint for Lab 6)
+# ai-generated: 20% - the course's example file; the student chose the documents (all seven labs are my own)
 # rag/corpus.yaml - the documents the rag service indexes (AI-SPEC.md A-01 to A-05).
-# Labs 1-5 and 7 are `student` (itsmlab.yaml): each file below existed at this path at that lab's submission
-# commit (lab1/v1 .. lab5/v2, lab7/v1 in this repository's history). Lab 6 is `checkpoint`: Lab 6 had no
-# accepted submission when this corpus was built, so its document is the course's, copied byte for byte.
+# Every lab is `student` (itsmlab.yaml): each file below existed at this path at that lab's accepted submission
+# (the most recent submission receipt): lab1/v3, lab2/v2, lab3/v2, lab4/v1, lab5/v1, lab6/v1, lab7/v1, all in this
+# repository's history.
 lab8_corpus:
   documents:
     - {path: specs/spec.md, lab: 1}
@@ -11,5 +11,5 @@ lab8_corpus:
     - {path: slo.md, lab: 3}
     - {path: postmortem.md, lab: 4}
     - {path: TRIAGE.md, lab: 5}
-    - {path: corpus/checkpoint/lab6/BLAST-RADIUS.md, lab: 6}
+    - {path: BLAST-RADIUS.md, lab: 6}
     - {path: EVIDENCE.md, lab: 7}

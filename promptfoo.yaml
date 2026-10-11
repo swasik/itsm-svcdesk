@@ -34,10 +34,10 @@ tests:
     assert:
       - {type: icontains, value: "Incident Manager"}
       - {type: icontains, value: "[DECISIONS.md]"}
-  - description: "L1-clock: the status code for a malformed X-Test-Clock, from the spec"
-    vars: {question: "What status code does svcdesk return when the X-Test-Clock header does not parse?"}
+  - description: "L1-p3: the P3 acknowledgement and resolution targets, in that order"
+    vars: {question: "What are the acknowledgement and resolution targets of a P3 ticket?"}
     assert:
-      - {type: regex, value: "\\b400\\b"}
+      - {type: regex, value: "\\b4\\s?(h|hours)\\b\\D{1,40}\\b24\\s?(h|hours)\\b"}
       - {type: icontains, value: "[specs/spec.md]"}
   - description: "L1-friday: the rejected alternative's due time for a Friday-evening P1"
     vars: {question: "Under the rejected alternative, when would a P1 raised on Friday at 17:00 be due for acknowledgement?"}
@@ -69,35 +69,36 @@ tests:
       - {type: regex, value: "\\b23\\b"}
       - {type: icontains, value: "[slo.md]"}
   # ---- Lab 4 ----
-  - description: "L4-rss: the recommendation service's memory, before and after"
-    vars: {question: "How much did the recommendation service's resident memory grow during the incident?"}
+  - description: "L4-mem: the recommendation service's container memory, before and after"
+    vars: {question: "How much did the recommendation service's container memory move during the incident?"}
     assert:
-      - {type: icontains, value: "73.0"}
-      - {type: icontains, value: "76.0"}
+      - {type: icontains, value: "53.5"}
+      - {type: icontains, value: "57.1"}
       - {type: icontains, value: "[postmortem.md]"}
   - description: "L4-mtta: the incident's MTTA"
-    vars: {question: "What was the MTTA of the checkout incident?"}
+    vars: {question: "What was the MTTA of the incident?"}
     assert:
-      - {type: icontains-any, value: ["17 s", "17 seconds"]}
+      - {type: regex, value: "\\b79\\s?(s|sec|seconds)\\b"}
       - {type: icontains, value: "[postmortem.md]"}
   # ---- Lab 5 ----
-  - description: "L5-semgrep: Semgrep's precision and recall, each tied to its name"
-    vars: {question: "What precision and recall did Semgrep reach in the bake-off?"}
+  - description: "L5-semgrep: Semgrep's precision and recall on the canary set, each tied to its name"
+    vars: {question: "What precision and recall did Semgrep reach on the canary set?"}
     assert:
-      - {type: regex, value: "[Pp]recision\\D{0,20}0\\.8"}
-      - {type: regex, value: "[Rr]ecall\\D{0,20}0\\.4"}
+      - {type: regex, value: "[Pp]recision\\D{0,60}0\\.33"}
+      - {type: regex, value: "[Rr]ecall\\D{0,20}0\\.25|0\\.33\\d*\\D{1,15}0\\.25"}     # "recall 0.25", or "0.3333 and 0.25, respectively"
       - {type: icontains, value: "[TRIAGE.md]"}
   # ---- Lab 6 ----
-  - description: "L6-375: how long 150 searches take at a 1 % step"
-    vars: {question: "How long would the gate's 150 searches take at a first step of 1 %?"}
+  - description: "L6-hang: what the hang cost on the flag path, measured and predicted"
+    vars: {question: "How many failed searches did the hang cost in the flag run, and how many were predicted?"}
     assert:
-      - {type: icontains-any, value: ["375 s", "375 seconds"]}
-      - {type: icontains, value: "[corpus/checkpoint/lab6/BLAST-RADIUS.md]"}
-  - description: "L6-promote: how long a release with the shadow takes to promote"
-    vars: {question: "How long did a release with the shadow take to promote an honest candidate?"}
+      - {type: regex, value: "\\b84\\b"}
+      - {type: regex, value: "\\b88\\b"}
+      - {type: icontains, value: "[BLAST-RADIUS.md]"}
+  - description: "L6-readback: what flagd served at the honest flag run's 50 % step"
+    vars: {question: "What did flagd's read-backs show at each step of the honest flag run?"}
     assert:
-      - {type: regex, value: "88\\D{1,6}92"}
-      - {type: icontains, value: "[corpus/checkpoint/lab6/BLAST-RADIUS.md]"}
+      - {type: icontains, value: "19/40"}
+      - {type: icontains, value: "[BLAST-RADIUS.md]"}
   # ---- Lab 7 ----
   - description: "L7-stress: how long the cassandra-stress run took"
     vars: {question: "How long did the cassandra-stress run take from docker run to exit?"}

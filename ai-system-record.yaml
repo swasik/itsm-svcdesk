@@ -7,8 +7,8 @@ ai_system_record:
 
   purpose: >-
     Answers questions about one student's ITSM coursework of 2026/27 - the svcdesk specification and decisions,
-    the DORA edge cases, the /kb/search SLO, the checkout-incident postmortem, the CI triage, the release blast
-    radius (course checkpoint) and the ScyllaDB evidence - from those eight documents only, citing the document of
+    the DORA edge cases, the /kb/search SLO, the shop-incident postmortem, the CI triage and scanner bake-off, the
+    release blast radius and the ScyllaDB evidence - from those eight documents only, all my own, citing the document of
     every fact and saying "I don't know" when no retrieved passage holds the answer. A good answer is a fact that
     the cited document states. It must not be used to grade anyone, to decide anything about a person, or as a
     source of facts about production systems: it knows only the eight documents listed in rag/corpus.yaml.
@@ -86,11 +86,14 @@ ai_system_record:
     golden_set: golden-set.jsonl
     recall_at_3: 0.9808
     suite: promptfoo.yaml
-    pass_rate: 0.94
+    pass_rate: 1.0
 
   changes_since:
-    # My Lab 4 postmortem's Action Items table has "none" in every Bug cell (Lab 4's I-20 asked for the column, not
-    # for ids), so the only Bug value A-23 can match is "none"; the row is named in the summary.
-    - action_item: none
-      commit: fd450d7532b87bf56cb403d6f8f08c44093becfc
-      summary: "Action Items row 4 of postmortem.md (Add a recommendation memory-growth alert to chat; Bug: none): prometheus/demo-alerts.yml gains RecommendationMemoryGrowth: deriv of recommendation's RSS over 10 minutes above 5 kB/s for 5 minutes, P3 to chat - the growth the cache-failure flag caused (73.0 to 76.0 MB) and no rule saw"
+    # Action items of my own Lab 4 postmortem (lab4: student; postmortem.md at lab4/v1 = 4159508), by Bug id. Each
+    # commit descends from 4159508 and is an ancestor of the commit I submit.
+    - action_item: ITSM-103
+      commit: 29fa11000e20511c4a9067044c2c37703d70790b
+      summary: "Lab 6's deploy.sh records every runtime flag change it makes (change_flag) in the change record with its before and after, and reads the flag back from flagd (40 OFREP evaluations) so a change flagd does not serve fails the release - the 'record every runtime flag change' half of ITSM-103; the svcdesk change and the failing-flag metric are not done (BLAST-RADIUS.md, Postmortem action)"
+    - action_item: ITSM-101
+      commit: 02d31b10465e2528552bdc78508543aa6843ac5b
+      summary: "prometheus/demo-alerts.yml gains FrontendLatencyPage, a P1 page when the frontend's p95 is above 5 s over 5 m (for 1m); on the Lab 4 snapshot the frontend's p95 crossed 5 s at 07:57:45, so it would have paged at about 07:58:39, a minute before CheckoutErrorRate (07:59:39)"

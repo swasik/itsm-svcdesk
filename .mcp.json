@@ -3,7 +3,7 @@
     "servicedesk": {
       "type": "stdio",
       "command": "docker",
-      "args": ["run", "-i", "--rm", "-e", "POISONED_MCP_LOGIN=fresh-student", "ghcr.io/swasik/poisoned-mcp:2026"]
+      "args": ["run", "-i", "--rm", "-e", "POISONED_MCP_LOGIN=swasik", "ghcr.io/swasik/poisoned-mcp:2026"]
     }
   }
 }
