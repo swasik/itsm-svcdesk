@@ -8,43 +8,63 @@
   "hypotheses": [
     {
       "id": "H1",
-      "hypothesis": "The \"ServiceLatencyRaised\" alert is likely caused by high latency in the \"shipping\" service, as indicated by the \"span_kind=latency\" and \"status_code=ERROR\" labels in the metrics.",
-      "component": "shipping",
-      "predicts": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"shipping\", span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 1000 unless on() sum(rate(traces_span_metrics_calls_total{service_name=\"shipping\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) > 0",
-      "at": "2026-10-10T23:12:00Z",
+      "hypothesis": "Check if `traces_span_metrics_calls_total` shows `STATUS_CODE_ERROR` for services like `checkout` or `parsing` during the time window. High error counts in `calls_total` with `status_code=400/500` could indicate a service outage due to misconfigurations or external dependencies.",
+      "component": "checkout",
+      "predicts": "(sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\",span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\",span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 0.05 unless on() (sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\",span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\",span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 0.5",
+      "at": "2026-10-11T08:01:00Z",
       "result": true,
       "verdict": "partially_correct",
-      "evidence": "Shipping's SERVER p95 over 5 minutes was 2600 ms at 23:12:00 (185 ms on the healthy shop, nothing above 1000 ms at the baseline instant 23:02:36), so the latency half holds. The mechanism the agent gave does not: shipping has no STATUS_CODE_ERROR series at all in the snapshot (the `unless` half returns nothing), and span_kind has no value `latency`. Right component, wrong mechanism: the slowness is real, the errors are invented."
+      "evidence": "14.4 % of checkout's SERVER spans (PlaceOrder) failed over the five minutes to 08:01:00, so checkout did show STATUS_CODE_ERROR; the `unless` half (more than half failing, which an outage would mean) returned nothing, and at the baseline instant 07:50:26 checkout had no error series at all. Right component, wrong mechanism: 95 % of orders still went through, the errors came from product-catalog's GetProduct (an external dependency, one of the agent's two guesses, but it never named it), and no status_code=400/500 label exists. The agent made no successful tool call in this run: the hypothesis restates the page's symptom (CheckoutErrorRate), it does not go beyond it."
     },
     {
       "id": "H2",
-      "hypothesis": "The \"CheckoutErrorRate\" alert suggests a failure in the \"checkout\" service, possibly due to errors in trace spans with \"span_kind=error\" and \"status_code=ERROR\".",
-      "component": "checkout",
-      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0.05",
-      "at": "2026-10-10T23:12:00Z",
-      "result": true,
-      "verdict": "correct",
-      "evidence": "16 % of checkout's SERVER spans (PlaceOrder) failed over the 5 minutes to 23:12:00; nothing at 23:02:36, when checkout had no failed span at all. The failure in checkout is real. The label value it cites (span_kind=error) does not exist - the failures carry span_kind=SPAN_KIND_SERVER - but the claim is about the failure, and the data confirms it. It restates the alert's name, so it localises the symptom, not the cause."
+      "hypothesis": "Analyze `traces_span_metrics_duration_milliseconds_bucket` for prolonged durations (e.g., >500ms) in services like `payment` or `inventory`. High latency might suggest resource contention (e.g., CPU/GPU overload) or inefficient code in those services.",
+      "component": "payment",
+      "predicts": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"payment\",span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 500",
+      "at": "2026-10-11T08:01:00Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "Payment's SERVER p95 over five minutes was 1.9 ms at 08:01:00 (3.3 ms on the healthy shop), far below 500 ms, so the query returned nothing: payment was not slow. There is no `inventory` service in the shop (label_values of service_name). The slow services were product-catalog, recommendation and the frontend, at the 15,000 ms ceiling."
     },
     {
       "id": "H3",
-      "hypothesis": "The \"FrontendErrorRate\" alert indicates errors in the \"frontend\" service, likely from trace spans with \"span_kind=error\" and \"status_code=ERROR\".",
-      "component": "frontend",
-      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"frontend\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"frontend\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0.01",
-      "at": "2026-10-10T23:12:00Z",
-      "result": true,
-      "verdict": "correct",
-      "evidence": "7.5 % of the frontend's SERVER spans failed over the 5 minutes to 23:12:00 (GET /api/products/[productId], GET /api/recommendations, POST /api/checkout); nothing at 23:02:36. Correct, and again the alert's own statement."
+      "hypothesis": "Look for `service_name` patterns in `calls_total` with `status_code=4XX` during the window. Errors in APIs like `user_profile` or `order_history` could stem from misconfigured endpoints or rate limiting.",
+      "component": null,
+      "predicts": "sum(rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\",service_name!~\"product-catalog|frontend|frontend-proxy|checkout|flagd\"}[5m])) > 0",
+      "at": "2026-10-11T08:01:00Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "No service outside the product-catalog path (product-catalog, frontend, frontend-proxy, checkout; flagd's error series stayed at 0) had a single failed SERVER span in the five minutes to 08:01:00: the query returned nothing, and every service the shop has would have an error series if it had failed. `user_profile` and `order_history` do not exist, and status_code has no 4XX value: the claim is about APIs the shop does not have."
     },
     {
       "id": "H4",
-      "hypothesis": "The \"ServiceErrorsRaised\" alert points to errors in the \"product-catalog\" service, possibly from trace spans with \"span_kind=error\" and \"status_code=ERROR\".",
-      "component": "product-catalog",
-      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"product-catalog\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_span_metrics_calls_total{service_name=\"product-catalog\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0.01",
-      "at": "2026-10-10T23:12:00Z",
-      "result": true,
-      "verdict": "correct",
-      "evidence": "7.3 % of product-catalog's SERVER spans failed over the 5 minutes to 23:12:00, all of them GetProduct (38 failed calls between 23:07 and 23:12); nothing at 23:02:36. This is the closest the agent came to a cause: product-catalog's GetProduct failures are what failed orders and product pages."
+      "hypothesis": "**Metric Availability**: The `traces_span_metrics_calls_total` or `duration_milliseconds_bucket` metrics are not being collected at the specified time (e.g., `2026-10-24T10:50:00Z`).",
+      "component": null,
+      "predicts": "(sum(rate(traces_span_metrics_calls_total[5m])) or on() vector(0)) < 1 or (sum(rate(traces_span_metrics_duration_milliseconds_bucket{le=\"+Inf\"}[5m])) or on() vector(0)) < 1",
+      "at": "2026-10-11T08:01:00Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "Both metrics were collected through the whole incident: at 08:01:00 the shop recorded many spans per second in each, so both halves returned nothing (with `or on() vector(0)` a missing metric would have counted as 0 and made the prediction true). The agent's empty results came from its own queries: it asked about 2026-10-24, two weeks after the incident, with label values (service_name=\"backend\", span_kind=\"error\") that do not exist."
+    },
+    {
+      "id": "H5",
+      "hypothesis": "**Time Window Constraints**: The incident window (e.g., `2026-10-24T10:50:00Z`) may exclude the actual data, or the metrics are rate-limited.",
+      "component": null,
+      "predicts": null,
+      "at": null,
+      "result": null,
+      "verdict": "unfalsifiable",
+      "why_no_query": "It is a claim about the agent's own choice of time and about an unnamed rate limit, not about the shop: no query on the shop's telemetry at an instant of the incident can say whether the agent's window excluded data, and 'rate-limited' names no metric, service or limit that a prediction could contradict."
+    },
+    {
+      "id": "H6",
+      "hypothesis": "**Label Filtering**: The `service_name` or `span_kind` labels might not match the expected values (e.g., \"backend\" or \"frontend\") in the metric queries.",
+      "component": null,
+      "predicts": null,
+      "at": null,
+      "result": null,
+      "verdict": "unfalsifiable",
+      "why_no_query": "It speaks of the agent's own query patterns ('might not match the expected values'), not of what happened to the shop: whatever any label held during the fault, the hedged claim survives, and it would hold on the healthy shop just the same, so no prediction can tell it from the baseline."
     }
   ]
 }

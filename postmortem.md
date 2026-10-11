@@ -1,170 +1,187 @@
 ---
 lab4_postmortem:
-  ticket: "61e3fa62-3f3f-44cc-970c-8185d6bffdff"
+  ticket: "23b2e067-02e9-441b-8f1c-4ce22042bd54"
   detecting_alert: ServiceLatencyRaised
-  onset: 2026-10-10T23:07:36Z
-  detection: 2026-10-10T23:11:08Z
-  acknowledgement: 2026-10-10T23:11:25Z
-  recovery: 2026-10-10T23:13:08Z
-  mttd_seconds: 212
-  mtta_seconds: 17
-  mttr_seconds: 332
-  identified_flags: [productCatalogFailure, intlShippingSlowdown, recommendationCacheFailure]
+  onset: 2026-10-11T07:55:26Z
+  detection: 2026-10-11T07:58:38Z
+  acknowledgement: 2026-10-11T07:59:57Z
+  recovery: 2026-10-11T08:05:38Z
+  mttd_seconds: 192
+  mtta_seconds: 79
+  mttr_seconds: 612
+  identified_flags: [productCatalogFailure, productCatalogLockContention, recommendationCacheFailure]
 ---
 <!-- ai-generated: 100% - Claude Code (Opus 5.5) worked the incident as the student and wrote this postmortem from its own notes and queries -->
 
-# Postmortem: one order in twelve failed and product pages broke for eight minutes
+# Postmortem: the product catalogue failed and stalled, and pages took 15 seconds, for nine minutes
 
 ## Date
 
-The incident happened on Saturday 10 October 2026 (UTC) between 23:07:36 and 23:15:31; this postmortem was written
-the same night, about half an hour after the last flag was switched off.
+The incident happened on Sunday 11 October 2026 (UTC) between 07:55:26 and 08:04:31; this postmortem was written the
+same morning, about half an hour after the last flag was switched off.
 
 ## Authors
 
 The on-call engineer for the shop, who was paged, opened and acknowledged the P1 ticket, switched the flags off and
-scored the AI investigator.
+scored the two AI investigators.
 
 ## Status
 
-Complete for the incident: service restored at 23:15:31 and the ticket acknowledged. Action items in progress; the
-problem record below stays open.
+Complete for the incident: service restored at 08:04:31 and the ticket acknowledged. Action items open; the problem
+record below stays open.
 
 ## Summary
 
-From 23:07:36 to 23:15:31 UTC three feature flags failed at once. Product-catalog's GetProduct failed for one product
-in ten, which failed one order in twelve and broke product and recommendation pages; non-US orders slowed by ten
-seconds in shipping; and the recommendation service ran without its cache. Switching the three flags off restored
-service within eight minutes of the onset.
+From 07:55:26 to 08:04:31 UTC three feature flags of the shop failed at once, all of them on the product catalogue's
+path. Product-catalog's GetProduct failed for one product in ten, which failed 3 of 60 orders and 27 product pages;
+product-catalog's reads stalled for up to 30 seconds at a time, which pushed the p95 of the frontend, of
+recommendation and of product-catalog to the 15-second ceiling of the histogram and checkout's p95 to 12 seconds; and
+the recommendation service ran without its cache. Switching the three flags off restored service nine minutes after
+the onset.
 
 ## Impact
 
-Measured on the span metrics in the snapshot (SERVER spans; counters are cumulative, so the error counts are the
-values the error series reached, which started at the onset):
+Measured on the span metrics in the snapshot (SERVER spans; counters are cumulative, so a difference of two samples
+counts the calls in between):
 
-- **Orders**: 50 PlaceOrder calls were made between 23:07:30 and 23:16:00
+- **Orders**: 60 PlaceOrder calls were made between 07:55 and 08:06
   (`sum(traces_span_metrics_calls_total{service_name="checkout",span_name="oteldemo.CheckoutService/PlaceOrder"})`,
-  91 then 141); **4 of them failed** (8 %), `max_over_time(traces_span_metrics_calls_total{service_name="checkout",
-  status_code="STATUS_CODE_ERROR"}[20m])` = 4. At its worst, 16 % of checkout's SERVER spans failed over five
-  minutes (23:12:00).
-- **Product pages**: 38 GetProduct calls of product-catalog failed, and so did 38 `GET /api/products/[productId]`
-  pages and 30 `GET /api/recommendations` calls of the frontend (the recommended products are fetched through the
-  same GetProduct); 8 `POST /api/checkout` calls of the frontend failed. The frontend's SERVER error ratio was 7.5 %
-  over the five minutes to 23:12:00 (`sum(rate(...{service_name="frontend",status_code="STATUS_CODE_ERROR"}[5m])) /
-  sum(rate(...{service_name="frontend"}[5m]))`), against 0 on the healthy baseline.
-- **Slow orders**: shipping's p95 reached 2600 ms over five minutes at 23:12:00 (185 ms healthy); one order took
-  longer than 5 s in shipping and in checkout (`calls_total - duration_milliseconds_bucket{le="5000"}`, 0 before
-  and 1 after). Checkout's p95 crossed 3 s for one minute (CheckoutLatencyHigh, 23:12:09 to 23:12:59).
-- **Recommendations without cache**: no visible user impact within the eight minutes; recommendation's resident
-  memory grew from 73.0 MB to 76.0 MB (`process_runtime_cpython_memory_bytes{service_name="recommendation",type="rss"}`)
-  and its p95 stayed under 10 ms.
+  73 then 133); **3 of them failed** (5 %; the same selector with `status_code="STATUS_CODE_ERROR"`, absent before
+  the onset, 3 at 08:06). Over the five minutes to 08:00:00, 17.9 % of checkout's SERVER spans failed
+  (`sum(rate(...{service_name="checkout",span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"}[5m])) /
+  sum(rate(...{service_name="checkout",span_kind="SPAN_KIND_SERVER"}[5m]))`), against no failed span on the healthy
+  shop.
+- **Product pages**: 26 GetProduct calls of product-catalog failed (the error counter reached 26 by 08:06, out of
+  about 1,030 GetProduct calls in the window), and with them 27 `GET /api/products/[productId]` pages,
+  19 `GET /api/recommendations` calls and 6 `POST /api/checkout` calls of the frontend
+  (`sum by (span_name) (increase(...{service_name="frontend",status_code="STATUS_CODE_ERROR"}[11m]))` at 08:06).
+  The frontend's SERVER error ratio was 6.8 % over the five minutes to 08:01:00.
+- **Slow pages and orders**: the p95 over five minutes of product-catalog, recommendation and the frontend reached
+  15,000 ms, the top bucket, from 07:58 to 08:04 (23 ms, 7 ms and 46 ms on the healthy shop at 07:50:26);
+  checkout's p95 reached 12,250 ms at 08:04 (91 ms healthy). Two orders took more than 5 s
+  (`calls_total - duration_milliseconds_bucket{le="5000"}` of PlaceOrder, 0 at 07:55, 2 at 08:06).
+- **Recommendations without cache**: recommendation's container memory moved only from 53.5 MB to 57.1 MB
+  (`container_memory_usage_total_bytes{container_name="recommendation"}`, 07:55 to 08:06); its latency was already
+  at the ceiling because of the stalled catalogue, so the cache failure's own share cannot be told apart in nine
+  minutes.
 
 ## Root Causes
 
-Three flags of the demo's flag provider switched to failing values together. productCatalogFailure made
+Three flags of the shop's flag provider switched to failing values together. productCatalogFailure made
 product-catalog answer GetProduct with an error for one product of the catalogue, so every order and every product
-page containing that product failed. intlShippingSlowdown (variant 10sec) made shipping's ShipOrder ten seconds
-slower for non-US addresses, which slowed the orders that shipped abroad. recommendationCacheFailure disabled the
-recommendation service's cache, a resource fault whose memory and latency growth had not become visible when it was
-switched off. What was already wrong: flags that can fail production paths are switchable at runtime by a source
-that overrides the shop's own flag file, with no change record and no alert that names them.
+page holding that product failed. productCatalogLockContention made product-catalog's reads wait on a lock for up to
+30 s, so every caller of the catalogue - the frontend's pages, recommendation's ListProducts, checkout's order
+preparation - waited with it. recommendationCacheFailure disabled the recommendation service's cache, a resource
+fault whose memory growth had barely started when it was switched off. What was already wrong: flags that can fail or
+stall the one service every page depends on are switchable at runtime by a source that overrides the shop's own flag
+file, with no change record and no alert that names them; and product-catalog is a single dependency of checkout,
+the frontend and recommendation with no timeout shorter than its stall.
 
 ## Trigger
 
-At 23:07:36 UTC (the onset, the first sample of the injector's fault series) the flag source served the three
-failing variants, and flagd picked them up on its next 5-second poll. Nothing was deployed; the change was a
-configuration change of feature flags.
+At 07:55:26 UTC (the onset, the first sample of the injector's fault series) the flag source served the three
+failing variants, and flagd picked them up on its next poll. Nothing was deployed; the change was a configuration
+change of feature flags.
 
 ## Resolution
 
-After reading the live flag state (`curl http://localhost:18090/flags.json`, 23:11:42) the on-call switched the
-three flags off one at a time through the injector, in order of user impact, watching each: productCatalogFailure
-at 23:11:53 (orders and pages failing; errors stopped within the next scrape), intlShippingSlowdown at 23:14:06
-(slow orders abroad), recommendationCacheFailure at 23:15:30 (no user impact seen yet). The fault series went to 0
-at 23:15:31. That is a workaround in ITIL's sense; the cause (flags that can be switched to failing values) stays.
+After reading the live flag state (`curl http://localhost:18090/flags.json`, 08:00:04) the on-call switched the
+three flags off one at a time through the injector, in order of user impact, watching each: productCatalogFailure at
+08:00:09 (orders and pages failing; checkout had no failed span over the three minutes to 08:01:57),
+productCatalogLockContention at 08:02:01 (the stalls; product-catalog's three-minute p95 fell from 15,000 ms to
+4,250 ms and recommendation's to 5 ms by 08:04:01), recommendationCacheFailure at 08:04:27. The fault series went to
+0 at 08:04:31. That is a workaround in ITIL's sense; the cause (flags that can be switched to failing values) stays.
 
 ## Detection
 
-The first alert to fire after the onset was the P3 ServiceLatencyRaised on shipping, at 23:11:08 (MTTD 212 s); one
-second later the P1 CheckoutErrorRate fired, and its page reached the pager at 23:11:19. Because the P1 fired, the
-inhibit rule (`system="shop"`) muted the P3 in chat, so the alert that formally detected the incident notified no
-one: the page did. Most of the 212 s is structural: the shop's metrics arrive once a minute, the rules use 5-minute
-rates (the first failing minute moves a 5-minute ratio only a little) and `for: 1m`. Without the alert, shoppers
-would have noticed first - 4 failed orders and 38 broken product pages in eight minutes.
+The first alert to fire after the onset was the P3 ServiceLatencyRaised on product-catalog (with the same rule on
+recommendation, in the same evaluation), at 07:58:38 (MTTD 192 s); it reached chat at 07:58:48 together with the P2
+FrontendLatencyHigh. The P1 CheckoutErrorRate fired a minute later, at 07:59:39, and its page reached the pager at
+07:59:49; from then on the inhibit rule muted the P2 and P3 alerts. So the on-call learned of the incident from the
+page, 71 s after the formal detection by a chat message that nobody is required to watch. Most of the 192 s is
+structural: the shop's metrics arrive once a minute, the rules use 5-minute windows and `for: 1m`. Without the
+alerts, shoppers would have noticed first: 15-second product pages from 07:58.
 
 ## Action Items
 
 | Action Item | Type | Owner | Bug |
 |---|---|---|---|
-| Put the P3 cause alerts in the same rule group as the P1 pages, so that a page and its cause start on the same evaluation and the page is the detecting alert | process | on-call | none |
-| Shorten `for:` on CheckoutErrorRate to 30 s and add a 1-minute-sample-aware burn-rate rule, to bring MTTD under two minutes | prevent | on-call | none |
-| Record every runtime flag change as a change in svcdesk, and export the failing-flag count as a metric the dashboards show | prevent | platform team | none |
-| Add a recommendation memory-growth alert to chat (cache failure is otherwise invisible for many minutes) | mitigate | on-call | none |
-| Keep a runbook step "read /flags.json first" for checkout pages | process | on-call | none |
+| Page on the frontend's latency (P1, p95 above 5 s over 5 m) next to checkout's, so a stalled catalogue pages within the same minute as the chat alert instead of a minute later | mitigate | on-call | ITSM-101 |
+| Put the P3 cause alerts in the same rule group as the P1 pages, so that a page and its cause start on the same evaluation and the page is the detecting alert | process | on-call | ITSM-102 |
+| Record every runtime flag change as a change in svcdesk, and export the count of failing flags as a metric the dashboards show | prevent | platform team | ITSM-103 |
+| Give the frontend's and checkout's calls to product-catalog a 2-second timeout with a cached fallback for product data, so a stalled catalogue degrades pages instead of stalling them | mitigate | shop team | ITSM-104 |
+| Add a runbook step "read /flags.json first" for checkout and frontend pages | process | on-call | ITSM-105 |
 
 ## Lessons Learned
 
 ### What went well
 
-The page came 10 s after the P1 fired and the ticket was acknowledged 17 s after detection. Reading what changed
-(the flag state) right after the symptoms named the three flags in under a minute; switching them off one at a time
-showed which one caused the errors (they stopped after productCatalogFailure went off).
+The page came 10 s after the P1 fired, and the ticket was created and acknowledged 8 s after the page. Reading what
+changed (the flag state) right after the symptoms named the three flags at once; switching them off one at a time
+showed which flag caused what: checkout's errors stopped after productCatalogFailure went off, the 15-second
+latencies fell after productCatalogLockContention went off.
 
 ### What went wrong
 
-The detecting alert by the rules was a P3 in a separate rule group that fired one second before the page and ended
-at 23:13:08, two minutes before the last flag was off, so the recorded MTTR (332 s) is shorter than the real
-recovery (475 s to 23:15:31). CheckoutLatencyHigh fired for one minute only: one slow order in a small sample moved
-the p95 across 3 s and back. The resource fault (recommendation cache) left no signal any of the rules watched.
+The detecting alert was a P3 in a separate rule group, which fired a minute before any P1: the page waited for
+checkout's error ratio to stay above 5 % for a minute, while the latency of every page was already at 15 s. The
+recorded MTTA (79 s) is mostly that minute, not the on-call's reaction. The resource fault (recommendation cache)
+left no signal any of the rules could separate from the catalogue stall.
 
 ### Where we got lucky
 
-The errors hit one product in ten, not checkout itself, so 92 % of orders still went through; and the shipping
-slowdown hit few non-US orders in this window. A heavier draw (payment failing at 50 %) would have failed half the
-orders for the same 212 s before anyone was paged.
+The errors hit one product in ten, not checkout itself, so 95 % of orders still went through, and the stall made
+pages slow rather than failed. A heavier draw (payment failing at 50 %) would have failed half the orders for the
+same three minutes before anyone was paged.
 
 ## Timeline
 
-All times UTC, 10 October 2026.
+All times UTC, 11 October 2026.
 
-- 22:51:47 - the playground starts; the injector begins its 10-minute baseline. A practice ticket at 22:52:49
-  proves svcdesk's requests reach Prometheus.
-- 23:02:12 - `max_over_time(ALERTS{alertstate="firing", severity="P1"}[10m])` returns nothing; no alert at all.
-- 23:02:14 - the injector is armed (onset window 2 to 6 minutes).
-- 23:07:36 - **onset**: the injector's fault series starts.
-- 23:10:08 - ServiceLatencyRaised (shipping p95 > 1 s) pending; 23:10:09 CheckoutErrorRate pending.
-- 23:11:08 - **detection**: ServiceLatencyRaised fires (P3, routed to chat, inhibited by the P1 a second later).
-- 23:11:09 - CheckoutErrorRate fires (P1); 23:11:19 the page reaches the pager.
-- 23:11:25 - the P1 ticket 61e3fa62-3f3f-44cc-970c-8185d6bffdff is created and **acknowledged** at 23:11:25.
-- 23:11:28 - symptoms: product-catalog GetProduct, frontend product pages and recommendations, checkout PlaceOrder
-  failing; shipping p95 2.6 s, checkout p95 5 s.
-- 23:11:42 - what changed: `/flags.json` shows productCatalogFailure on, intlShippingSlowdown 10sec,
+- 07:28:45 - first start of the playground; a P1 (CheckoutLatencyHigh) fired on the warming-up shop from 07:32:29
+  to 07:33:59. The injector was armed at 07:39:01 without waiting for that P1 to leave the 10-minute window, so the
+  run was abandoned with `down -v` before any onset (no fault series had started).
+- 07:40:31 - the playground starts again; the injector begins a new 10-minute baseline. A practice ticket at
+  07:42:23 proves svcdesk's requests reach Prometheus.
+- 07:51:02 - baseline 10 min; `max_over_time(ALERTS{alertstate="firing", severity="P1"}[10m])` returns nothing and
+  no alert is firing.
+- 07:51:14 - the injector is armed (onset window 2 to 6 minutes).
+- 07:55:26 - **onset**: the injector's fault series starts.
+- 07:57:38 - ServiceLatencyRaised (product-catalog and recommendation p95 above 1 s) and FrontendLatencyHigh pending.
+- 07:58:38 - **detection**: ServiceLatencyRaised fires (P3); FrontendLatencyHigh (P2) fires at 07:58:39; both reach
+  chat at 07:58:48.
+- 07:59:39 - CheckoutErrorRate fires (P1); 07:59:49 the page reaches the pager.
+- 07:59:57 - the P1 ticket 23b2e067-02e9-441b-8f1c-4ce22042bd54 is created and **acknowledged**.
+- 08:00:04 - symptoms: checkout, frontend and product-catalog failing, p95 of product-catalog, recommendation and
+  the frontend at 15 s; what changed: `/flags.json` shows productCatalogFailure, productCatalogLockContention and
   recommendationCacheFailure on.
-- 23:11:53 - productCatalogFailure switched off (`changed: true`).
-- 23:12:09 - CheckoutLatencyHigh fires (P1); paged at 23:12:19, resolved at 23:13:19.
-- 23:13:08 - **recovery** as the rules define it: ServiceLatencyRaised's firing run ends.
-- 23:14:03 - no new errors in any service over the last two minutes.
-- 23:14:06 - intlShippingSlowdown switched off.
-- 23:14:59 - CheckoutErrorRate's last firing sample; its resolved notification reaches the pager at 23:15:19.
-- 23:15:30 - recommendationCacheFailure switched off; 23:15:31 the fault series goes to 0.
-- 23:15:49 - the AI investigator (qwen3:1.7b) runs; its four hypotheses are scored in `ai-rca-eval.json`. None was
-  acted on: the flags were off before it answered. Its best entry, H4 (product-catalog errors), was confirmed by
-  `sum(rate(...{service_name="product-catalog",status_code="STATUS_CODE_ERROR"}[5m])) / sum(rate(...)) > 0.01`,
-  7.3 % at 23:12:00 and nothing at 23:02:36.
-- 23:20:19 - snapshot taken.
+- 08:00:09 - productCatalogFailure switched off (`changed: true`).
+- 08:01:39 - CheckoutLatencyHigh fires (P1), paged at 08:01:49.
+- 08:01:57 - no failed checkout span over the last three minutes; latencies still at 15 s.
+- 08:02:01 - productCatalogLockContention switched off.
+- 08:03:39 - CheckoutErrorRate resolved (pager 08:03:49); 08:04:39 CheckoutLatencyHigh resolved (pager 08:04:49).
+- 08:04:27 - recommendationCacheFailure switched off; 08:04:31 the fault series goes to 0.
+- 08:05:38 - **recovery** as the rules define it: ServiceLatencyRaised's firing run ends (chat resolved 08:05:48).
+- 08:06:11 to 08:28:00 - the AI investigators (qwen3:1.7b, then qwen3:4b-instruct) run; their hypotheses are scored
+  in `ai-rca-eval.json` and `ai-rca-eval-2.json`. None was acted on: the flags were off before they answered. The
+  only entry with a true prediction, H1 of `ai-rca-eval.json` (checkout failing, but no outage), was confirmed by
+  `(checkout's SERVER error ratio > 0.05) unless on() (the same ratio > 0.5)`: 14.4 % at 08:01:00, nothing at the
+  baseline instant 07:50:26.
+- 08:28:19 - final snapshot taken.
 
 ## Supporting information
 
-`itsmlab incident 4` on the committed snapshot printed onset 23:07:36, detection 23:11:08 (ServiceLatencyRaised),
-acknowledgement 23:11:25, recovery 23:13:08, MTTD 212 s, MTTA 17 s, MTTR 332 s. The pager's log shows four
-notifications, all to `pager` (CheckoutErrorRate firing 23:11:19 and resolved 23:15:19; CheckoutLatencyHigh
-firing 23:12:19 and resolved 23:13:19) and none to chat: every P2 and P3 was inhibited by a firing shop P1. The AI
-ledgers are `ai-rca-eval.json` (qwen3:1.7b) and `ai-rca-eval-2.json` (qwen3:4b-instruct), compared in
-`ai-rca/COMPARISON.md`. The rules are `prometheus/demo-alerts.yml`, the routes `alertmanager/alertmanager.yml`.
+`itsmlab incident 4` on the committed snapshot printed onset 07:55:26, detection 07:58:38 (ServiceLatencyRaised),
+acknowledgement 07:59:57, recovery 08:05:38, MTTD 192 s, MTTA 79 s, MTTR 612 s. The pager's log shows seven
+notifications: chat at 07:58:48 (ServiceLatencyRaised on product-catalog and recommendation) and 07:58:49
+(FrontendLatencyHigh), before the P1 fired; pager firing at 07:59:49 (CheckoutErrorRate) and 08:01:49
+(CheckoutLatencyHigh), resolved at 08:03:49 and 08:04:49; chat resolved at 08:05:48. The AI ledgers are
+`ai-rca-eval.json` (qwen3:1.7b) and `ai-rca-eval-2.json` (qwen3:4b-instruct), compared in `ai-rca/COMPARISON.md`.
+The rules are `prometheus/demo-alerts.yml`, the routes `alertmanager/alertmanager.yml`.
 
 ## Problem record
 
-- Incident record: 61e3fa62-3f3f-44cc-970c-8185d6bffdff (P1, acknowledged 23:11:25 UTC, service restored 23:15:31 UTC)
-- Root cause: runtime feature flags can switch product-catalog, shipping and recommendation into failing modes with no change record, no review and no metric that names a failing flag
-- Known error: when productCatalogFailure, intlShippingSlowdown or recommendationCacheFailure is on, GetProduct fails for one product, non-US shipping slows by 5-10 s, recommendations lose their cache
-- Workaround: read the flag source's state and switch the failing flags off one at a time (`POST /flags/<flag>/off`), watching checkout's errors and latency after each
+- Incident record: 23b2e067-02e9-441b-8f1c-4ce22042bd54 (P1, acknowledged 07:59:57 UTC, service restored 08:04:31 UTC)
+- Root cause: runtime feature flags can switch product-catalog into failing and stalling modes and recommendation out of its cache, with no change record, no review and no metric that names a failing flag; callers of product-catalog have no timeout shorter than its stall
+- Known error: when productCatalogFailure, productCatalogLockContention or recommendationCacheFailure is on, GetProduct fails for one product in ten, catalogue reads stall up to 30 s, recommendations lose their cache
+- Workaround: read the flag source's state and switch the failing flags off one at a time (`POST /flags/<flag>/off`), watching checkout's errors and the frontend's latency after each

@@ -1,5 +1,5 @@
 {
-  "id": "61e3fa62-3f3f-44cc-970c-8185d6bffdff",
+  "id": "23b2e067-02e9-441b-8f1c-4ce22042bd54",
   "title": "Shop checkout failing, paged by CheckoutErrorRate",
   "description": "",
   "reporter": {
@@ -11,13 +11,13 @@
   "urgency": 1,
   "priority": "P1",
   "state": "acknowledged",
-  "created_at": "2026-10-10T23:11:25Z",
-  "acknowledged_at": "2026-10-10T23:11:25Z",
+  "created_at": "2026-10-11T07:59:57Z",
+  "acknowledged_at": "2026-10-11T07:59:57Z",
   "resolved_at": null,
   "closed_at": null,
   "related_to": null,
   "sla": {
-    "ack_due_at": "2026-10-10T23:26:25Z",
-    "resolve_due_at": "2026-10-11T03:11:25Z"
+    "ack_due_at": "2026-10-11T08:14:57Z",
+    "resolve_due_at": "2026-10-11T11:59:57Z"
   }
 }

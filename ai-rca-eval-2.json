@@ -8,33 +8,33 @@
   "hypotheses": [
     {
       "id": "H1",
-      "hypothesis": "No service showed errors during the time window from 22:55Z to 23:20Z on 2026-10-10, based on the absence of error counts in the spans for any service name when filtering by status_code=STATUS_CODE_ERROR.",
+      "hypothesis": "The `traces_span_metrics_calls_total` or `traces_span_metrics_duration_milliseconds_bucket` metrics are not properly labeled with `status_code=\"STATUS_CODE_ERROR\"` for any service, leading to zero error rate detections despite checkout errors being reported at 07:59:49Z.",
       "component": null,
-      "predicts": "sum(rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\", service_name!=\"flagd\"}[5m])) == 0",
-      "at": "2026-10-10T23:12:00Z",
+      "predicts": "(count(traces_span_metrics_calls_total{status_code=\"STATUS_CODE_ERROR\"}) or on() vector(0)) < 1",
+      "at": "2026-10-11T08:01:00Z",
       "result": false,
       "verdict": "hallucinated",
-      "evidence": "At 23:12:00 the shop's SERVER spans failed at 0.55/s summed over all services (flagd's own stream excluded), so `== 0` returns nothing. The agent's queries used span_name=\"*\", which PromQL reads as the literal value `*` and which matches no series: it read the absence of its own typo as the absence of errors."
+      "evidence": "At 08:01:00 the snapshot holds STATUS_CODE_ERROR series for checkout, product-catalog, the frontend and frontend-proxy, so the count is well above 0 and the query returned nothing (with `or on() vector(0)`, no such series would have made it true). Checkout's error ratio was 14.4 % then. The agent's own query asked for status_code=\"ERROR\", a value that does not exist, and read the empty answer as a labelling fault."
     },
     {
       "id": "H2",
-      "hypothesis": "The query for checkout service errors returned no results: `traces_span_metrics_calls_total{service_name=\"checkout\", span_name=\"*\", status_code=\"STATUS_CODE_ERROR\"}`.",
-      "component": "checkout",
-      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) == 0",
-      "at": "2026-10-10T23:12:00Z",
+      "hypothesis": "The data for the `checkout`, `payment`, `cart`, `shipping`, or `currency` services may have been corrupted or temporarily suspended during the incident window, causing span metrics to be missing or invalid for the entire duration.",
+      "component": null,
+      "predicts": "(sum(rate(traces_span_metrics_calls_total{service_name=\"checkout\"}[5m])) or on() vector(0)) < 0.01 or (sum(rate(traces_span_metrics_calls_total{service_name=\"payment\"}[5m])) or on() vector(0)) < 0.01 or (sum(rate(traces_span_metrics_calls_total{service_name=\"cart\"}[5m])) or on() vector(0)) < 0.01 or (sum(rate(traces_span_metrics_calls_total{service_name=\"shipping\"}[5m])) or on() vector(0)) < 0.01 or (sum(rate(traces_span_metrics_calls_total{service_name=\"currency\"}[5m])) or on() vector(0)) < 0.01",
+      "at": "2026-10-11T08:01:00Z",
       "result": false,
       "verdict": "hallucinated",
-      "evidence": "Read as the claim it makes (checkout had no errors), the data contradicts it: checkout's failed SERVER spans ran at 0.015/s at 23:12:00 (16 % of orders), so `== 0` returns nothing. The query it quotes returned nothing only because span_name=\"*\" matches no span."
+      "evidence": "Each of the five services recorded spans at well above 0.01 per second over the five minutes to 08:01:00 (checkout alone about 0.08 PlaceOrder calls per second), so every term returned nothing; a missing service would have counted as 0 through `or on() vector(0)` and made the prediction true. The span metrics were neither missing nor suspended; the agent's queries failed on its own PromQL (parse errors, nonexistent label values)."
     },
     {
       "id": "H3",
-      "hypothesis": "Given the absence of error metrics across all relevant services, the most likely cause of the reported checkout errors at 23:11:09Z is a transient or external factor—such as a temporary network issue, client-side JavaScript error, or a misaligned page load—rather than a failure at any of the backend services as monitored.",
-      "component": "product-catalog",
-      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"product-catalog\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) < 0.001",
-      "at": "2026-10-10T23:12:00Z",
+      "hypothesis": "A misalignment between Prometheus metric naming, labeling, or service configuration has resulted in the `span_name` or `service_name` labels being filtered incorrectly, such that no span metrics match the expected query patterns (e.g., `span_name=\"*\"` or `service_name=\"checkout\"`), leading to empty or erroneous results.",
+      "component": null,
+      "predicts": "(count(traces_span_metrics_calls_total{service_name=\"checkout\"}) or on() vector(0)) < 1",
+      "at": "2026-10-11T08:01:00Z",
       "result": false,
       "verdict": "hallucinated",
-      "evidence": "Its testable part is \"rather than a failure at any of the backend services as monitored\". product-catalog's GetProduct failed at 0.13/s over the 5 minutes to 23:12:00, so the prediction \"no backend failure\" (< 0.001/s) returns nothing: a monitored backend service did fail. The alternative it offers (network, client-side JavaScript) has no support in any series it read."
+      "evidence": "service_name=\"checkout\" matches checkout's span series at 08:01:00 (the count is above 1), so the query returned nothing: the agent's own second query in the same run, query_range on traces_span_metrics_calls_total{service_name=\"checkout\"}, had returned data. Only `span_name=\"*\"` matches nothing, because `*` is not a wildcard in an equality matcher; that is the agent's query, not a misconfiguration of the shop."
     }
   ]
 }
