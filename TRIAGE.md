@@ -1,7 +1,7 @@
 ---
 lab5_triage:
   image: ghcr.io/swasik/itsm-svcdesk@sha256:f81832ce5b5110a8ee3bc2b85d27863a851feecde5c2c13089a2e6b44383e934
-  sarif_receipt: 0
+  sarif_receipt: 264
 ---
 <!-- ai-generated: 100% - Claude Code (hosted test run) triaged the pipeline's runs and wrote this file -->
 # Triage
@@ -29,24 +29,35 @@ triaged Dockerfile) was green, and its image is the digest above.
 
 ## Bake-off
 
-Practice set first (9 labelled defects, my bakeoff.py reproduces expected.json exactly): Trivy 3 TP / 0 FP
-(precision 1.0, recall 0.3333), Grype and OSV-Scanner 2 / 0 each (1.0, 0.2222), gitleaks 2 / 0 (1.0, 0.2222),
-Semgrep 5 / 2 (0.7143, 0.5556, F1 0.625), the course's example AI reviewer 6 / 3 (0.6667 on all three). The three
-dependency scanners and gitleaks never raise a false alarm in the set because their class is fixed by the tool
-(P-19 b) and a pin or a credential is either there or not; they are also blind to everything outside their class,
-which caps their recall at 2/9 or 3/9. Semgrep is the only detector that sees code defects, and its two false
-positives are the instructive cells: the same SHA-1 rule is a true positive on a password hash and a false positive
-on a message fingerprint - only the key can tell the two apart.
+Practice set first (9 labelled defects; my bakeoff.py reproduces expected.json): Trivy 3 TP / 0 FP, Grype and
+OSV-Scanner 2 / 0 each, gitleaks 2 / 0, Semgrep 5 / 2, the course's example AI reviewer 6 / 3.
 
-On my canary set the labels were not revealed in this offline run (no SARIF receipt could be filed), so I have the
-raw result counts but no matrix: inside lab5-canary/ Trivy reported 20 distinct results, Grype 18, OSV-Scanner 22
-distinct (36 raw - it writes almost every result twice), gitleaks 3 (one per credential file), Semgrep 5 and the
-local qwen3:4b-instruct reviewer 9. With 2 pins in the set, most of Trivy's and Grype's results are distinct
-advisories on the same two packages and will collapse onto 2 TPs; whether the rest count as FPs depends on P-21's
-(ruleId, file, lines) key, which makes per-advisory reporting look like low precision even when every advisory is real.
+My canary set (SARIF receipt #264, canary run 38121870505 of C 1be96eb, 8 labelled defects: A03 path traversal,
+A08 weak randomness, A10 pickle, C01-C03 three credentials, D05 PyYAML and D08 urllib3 pins):
 
-What I would gate on: Trivy for dependency files and the image, and gitleaks - high precision, a fixed class, a
-cheap fix (raise a pin, move a credential) - which is what the skeleton does. Semgrep and an AI reviewer report;
-with precision around 0.7 on seeded defects they would make developers click through red builds. Every recall
-here is an upper bound: seeded defects are written to be found, and the set also holds defects none of the five
-scanners can see by construction (access control, logic), so the real-world numbers would be lower.
+| tool | TP | FP | FN | precision | recall | F1 |
+|---|---|---|---|---|---|---|
+| trivy | 4 | 1 | 4 | 0.8 | 0.5 | 0.6154 |
+| gitleaks | 3 | 1 | 5 | 0.75 | 0.375 | 0.5 |
+| grype | 2 | 0 | 6 | 1.0 | 0.25 | 0.4 |
+| osv-scanner | 2 | 0 | 6 | 1.0 | 0.25 | 0.4 |
+| ai-reviewer (qwen3:4b-instruct, local) | 3 | 2 | 5 | 0.6 | 0.375 | 0.4615 |
+| semgrep | 2 | 4 | 6 | 0.3333 | 0.25 | 0.2857 |
+
+Cells that surprised me, checked result by result. Trivy is the best single detector here only because it runs two
+scanners: its 14 advisories on the two pins collapse onto D05 and D08, and its secret scanner adds C02 and C03.
+The one FP that gitleaks, Trivy and Semgrep share is the same decoy: jwt.io's public example token in
+`app/token_fixtures.py`, a test fixture. gitleaks is the only tool that finds C01 (a `curl -u user:password` with
+no token shape). Semgrep pays for its breadth: of its 4 FPs, 3 are SQL rules firing on the two decoys that are safe
+by construction (`columns.py` interpolates an allow-listed column name, `ticket_counts.py` an `int()`), and its one
+code TP is the pickle in `session_store.py`. The local 4B model found two of the three credentials and the PyYAML pin,
+reported the `int()`-cast decoy as SQL injection, and put the curl credential on line 1 instead of 3 - a positioning
+error that P-20 counts as an FP plus an FN. Nobody found A03 (path traversal) or A08 (`random.choice` for reset
+tokens), and none of the five scanners can see A12-style access control at all.
+
+What I would gate on: Trivy (dependency files and the image) and gitleaks, as the skeleton does - precision 0.75 to
+0.8 here, a fixed class, a cheap and obvious fix, and their single FP is a fixture that an ignore with a reason
+handles. Grype and OSV-Scanner add nothing Trivy did not already find on this set (precision 1.0 but the same two
+defects), so they stay reporting. Semgrep with `p/default` (precision 0.33) and the AI reviewer (0.6) would fail
+builds on safe code; they belong in review, not in a gate. Every recall above is an upper bound: seeded defects are
+written to be found, and on real code these numbers would be lower.
