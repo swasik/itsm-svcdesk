@@ -4,6 +4,7 @@
 # Design:
 #   - P1 pages on what a shopper feels at checkout: orders failing (CheckoutErrorRate) and orders slow
 #     (CheckoutLatencyHigh). Every fault of the pool fails or slows checkout, so one of the two pages on every draw.
+#     Since the postmortem (ITSM-101), pages stalling everywhere page as well (FrontendLatencyPage, p95 above 5 s).
 #   - P2 / P3 go to chat: the frontend as the shopper sees it, and cause-side signals (payment, product-catalog,
 #     shipping, email, recommendation, ad) that help the on-call localise, never page.
 #   - Only SERVER spans (what a service answered its callers); windows of 5 minutes (one OTLP sample a minute).
@@ -40,6 +41,23 @@ groups:
           system: shop
         annotations:
           summary: "The slowest 5 % of orders take more than 3 s (PlaceOrder p95, 5 minutes)"
+
+      # Pages slow (postmortem.md, action item ITSM-101). The Lab 4 incident stalled product-catalog: every page took
+      # 15 s from 07:58, but the first page waited for checkout's error ratio (07:59:39). A frontend p95 above 5 s
+      # is what a shopper feels on every page, not just at checkout, so it pages too, on the same 5-minute window
+      # and `for: 1m` as the chat alert FrontendLatencyHigh (2 s), which it then mutes through the inhibit rule.
+      # Healthy baseline: frontend p95 46 ms (postmortem.md, Impact).
+      - alert: FrontendLatencyPage
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name="frontend", span_kind="SPAN_KIND_SERVER"}[5m])))
+          > 5000
+        for: 1m
+        labels:
+          service: frontend
+          severity: P1
+          system: shop
+        annotations:
+          summary: "The frontend's p95 is above 5 s over the last 5 minutes: pages are stalling"
 
       # What the shopper sees on every page: the frontend's own errors (to chat).
       - alert: FrontendErrorRate
