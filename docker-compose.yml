@@ -1,4 +1,4 @@
-# ai-generated: 100% - Claude Code (Fable 5.1) wrote this file from design/LAB1.md sections 1.8 and 7.4; the lecturer ran it
+# ai-generated: 100% - Claude Code (Fable 5.1) wrote this file from design/LAB1.md sections 1.8 and 7.4; Lab 8: the ollama, rag and phoenix services copied unchanged from the course's compose-lab8.yml by Claude Code (Opus 5.5)
 # Compose contract (LAB1.md section 1.8): service `svcdesk` on 8080 with the test clock on, no bind mounts,
 # a `tests` service under the `tests` profile that runs the suite against SVCDESK_URL.
 # Lab 3 (LAB3.md sections 2 and 4): the `kb-index` dependency, and the local Prometheus and Grafana under the
@@ -8,6 +8,7 @@
 #   SVCDESK_C1=business docker compose up --wait svcdesk              # switch a resolution (see README.md)
 #   docker compose --profile tests run --rm tests                     # own tests (Stretch S3)
 #   docker compose --profile observability up -d --build             # Prometheus on 9090, Grafana on 3000
+# Lab 8 (compose-lab8.yml): `ollama` (models in the volume ollama-models) and `rag` on localhost:8088; Phoenix optional.
 
 services:
   svcdesk:
@@ -64,5 +65,54 @@ services:
       SVCDESK_C3: ${SVCDESK_C3:-vip}
     command: ["python", "tests/run_tests.py"]
 
+  # Lab 8 (compose-lab8.yml of the course package, copied unchanged): the models' server, the rag service, Phoenix.
+  ollama:
+    # Pinned by digest (AI-SPEC.md section 1): Ollama releases weekly, and a tag alone runs whatever your disk holds.
+    image: ollama/ollama:0.35.0@sha256:2a6e883b917fc543389599dae79918f5cac9e1438890506982f44aa4f5625d01
+    environment:
+      OLLAMA_NUM_PARALLEL: "1"                   # one request at a time: four slots at num_ctx 8192 take about 5 GB
+      LLAMA_ARG_CACHE_RAM: "0"                   # no prompt cache: Ollama's llama-server would keep every prompt in RAM, up to 8 GiB
+    volumes:
+      - ollama-models:/root/.ollama              # the models: pulled once, kept across `down` (not across `down -v`)
+    ports:
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  rag:
+    build:
+      context: .                                 # the repository root: the image carries the corpus documents
+      dockerfile: rag/Dockerfile
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434       # A-06: embeddings only, all-minilm:22m
+    ports:
+      - "127.0.0.1:${RAG_PORT:-8088}:8080"       # A-06: the service listens on 8080 inside the network
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  phoenix:
+    # Optional tracing UI (Arize Phoenix, Elastic License 2.0). Without PHOENIX_WORKING_DIR its SQLite database sits in
+    # the container's home directory and is lost with the container, whatever is mounted at /mnt/data (HANDOUT.md).
+    image: arizephoenix/phoenix:20.16.0@sha256:d55a4ffac8c670e2d0bf72e44e81e32a73e832b7ce449e6e4567487adfa9d8d6
+    profiles: ["phoenix"]
+    environment:
+      PHOENIX_WORKING_DIR: /mnt/data
+    volumes:
+      - phoenix-data:/mnt/data
+    ports:
+      - "127.0.0.1:${PHOENIX_PORT:-6006}:6006"       # the UI, and OTLP over HTTP at /v1/traces
+      - "127.0.0.1:${PHOENIX_OTLP_PORT:-4317}:4317"  # OTLP over gRPC
+
 volumes:
   svcdesk-data:
+  ollama-models:
+  phoenix-data:

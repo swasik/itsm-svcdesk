@@ -1,0 +1,31 @@
+{"id": "g01", "question": "What are the acknowledgement and resolution targets of a P2 ticket?", "relevant": ["specs/spec.md"]}
+{"id": "g02", "question": "Within how many days of resolution can a resolved ticket be reopened?", "relevant": ["specs/spec.md", "DECISIONS.md"]}
+{"id": "g03", "question": "What happens to the priority of a VIP reporter's ticket that the matrix puts at P3?", "relevant": ["specs/spec.md", "DECISIONS.md"]}
+{"id": "g04", "question": "Who is the service owner of the decision that closed tickets cannot be reopened?", "relevant": ["DECISIONS.md"]}
+{"id": "g05", "question": "What status code does svcdesk return when the X-Test-Clock header does not parse?", "relevant": ["specs/spec.md"]}
+{"id": "g06", "question": "How many pairs of overlapping incidents does the practice event log contain?", "relevant": ["EDGE-CASES.md"]}
+{"id": "g07", "question": "How is a commit whose timestamp is later than the deployment that shipped it handled?", "relevant": ["EDGE-CASES.md"]}
+{"id": "g08", "question": "How many production deployments in the practice log have no linked commits, and what were they?", "relevant": ["EDGE-CASES.md"]}
+{"id": "g09", "question": "What are the latency threshold and the latency objective of the /kb/search SLO?", "relevant": ["slo.md", "corpus/checkpoint/lab6/BLAST-RADIUS.md"]}
+{"id": "g10", "question": "What is the availability error budget of the /kb/search SLO in minutes?", "relevant": ["slo.md"]}
+{"id": "g11", "question": "Which burn rate and which windows does the KbSearchLatencyBurnFast alert use?", "relevant": ["slo.md"]}
+{"id": "g12", "question": "What p99 latency was measured for /kb/search, and where do the slow requests sit?", "relevant": ["slo.md"]}
+{"id": "g13", "question": "Which alert detected the checkout incident, and what was the MTTD?", "relevant": ["postmortem.md"]}
+{"id": "g14", "question": "Which three feature flags caused the checkout incident?", "relevant": ["postmortem.md"]}
+{"id": "g15", "question": "How many PlaceOrder calls failed during the incident, out of how many?", "relevant": ["postmortem.md"]}
+{"id": "g16", "question": "How much did the recommendation service's resident memory grow during the incident?", "relevant": ["postmortem.md"]}
+{"id": "g17", "question": "Which CVE in libpcre2 was found in the image, and how was it fixed?", "relevant": ["TRIAGE.md"]}
+{"id": "g18", "question": "Which tool had the highest recall in the scanner bake-off?", "relevant": ["TRIAGE.md"]}
+{"id": "g19", "question": "Which canary defect did no scanner find, and why?", "relevant": ["TRIAGE.md"]}
+{"id": "g20", "question": "What max_burn_rate does the release gate use, and what share of 5xx answers fails a phase?", "relevant": ["corpus/checkpoint/lab6/BLAST-RADIUS.md"]}
+{"id": "g21", "question": "Why does the flag rollout start at 10 % instead of the 1 % of the action item?", "relevant": ["corpus/checkpoint/lab6/BLAST-RADIUS.md"]}
+{"id": "g22", "question": "How many searches does a gate step need before it can pass?", "relevant": ["corpus/checkpoint/lab6/BLAST-RADIUS.md"]}
+{"id": "g23", "question": "How many buckets does the events_by_actor table use, and why that number?", "relevant": ["EVIDENCE.md"]}
+{"id": "g24", "question": "What p99 write latency did cassandra-stress measure on the ring?", "relevant": ["EVIDENCE.md"]}
+{"id": "g25", "question": "How many rows did github-actions[bot]'s partition hold in the instructor's schema?", "relevant": ["EVIDENCE.md"]}
+{"id": "g26", "question": "Why did CREATE TABLE fail while two of the three nodes were down?", "relevant": ["EVIDENCE.md"]}
+{"id": "u01", "question": "What was svcdesk's cloud hosting bill in October 2026?", "relevant": []}
+{"id": "u02", "question": "Which Kubernetes version does the production cluster run?", "relevant": []}
+{"id": "u03", "question": "How many students passed the course in 2025?", "relevant": []}
+{"id": "u04", "question": "Which on-call engineer was paged for the database outage in March?", "relevant": []}
+{"id": "u05", "question": "Which cloud provider hosts the svcdesk production database?", "relevant": []}

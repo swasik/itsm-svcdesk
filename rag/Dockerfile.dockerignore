@@ -1,0 +1,15 @@
+# ai-generated: 0% - the course's file, unchanged
+# What the rag image leaves out of the repository. Docker reads this file instead of the root .dockerignore when it
+# builds rag/Dockerfile (the file next to a Dockerfile, named after it, wins). The corpus may only name Markdown,
+# YAML and text files (A-04), so nothing below can be one of its documents.
+.git
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+data
+report.json
+**/*.tar.gz
+**/*.gz
+**/*.zip
+**/*.db

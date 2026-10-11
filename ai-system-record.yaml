@@ -1,0 +1,96 @@
+# ai-generated: 60% - Claude Code (Opus 5.5), working as the student, drafted the record from the course's template and AI-SPEC.md section 7; every citation and date was checked against AI-SPEC.md 7.2/7.3 and `itsmlab verify 8 --skip-eval`, the classification and its reasoning are the student's position
+# ai-system-record.yaml - the governance record of the semester assistant (AI-SPEC.md section 7, A-19 to A-23).
+# Every legal statement names its regulation; dates are the law as it stands in January 2027 (AI-SPEC.md 7.3).
+
+ai_system_record:
+  name: "svcdesk semester assistant (Lab 8 RAG over my ITSM coursework)"
+
+  purpose: >-
+    Answers questions about one student's ITSM coursework of 2026/27 - the svcdesk specification and decisions,
+    the DORA edge cases, the /kb/search SLO, the checkout-incident postmortem, the CI triage, the release blast
+    radius (course checkpoint) and the ScyllaDB evidence - from those eight documents only, citing the document of
+    every fact and saying "I don't know" when no retrieved passage holds the answer. A good answer is a fact that
+    the cited document states. It must not be used to grade anyone, to decide anything about a person, or as a
+    source of facts about production systems: it knows only the eight documents listed in rag/corpus.yaml.
+
+  users:
+    - "the student who wrote the corpus, looking up what an earlier lab measured or decided"
+    - "the lecturer, reading the system as evidence for the Lab 8 defence (not as a grading tool)"
+
+  data_flows:
+    - from: "the corpus (rag/corpus.yaml: eight Markdown files of this repository)"
+      to: "the rag service's in-memory index (chunks and all-minilm:22m embeddings via the local Ollama)"
+      data: "coursework text: specifications, measurements, decisions; no personal data beyond role names (on-call, service owner)"
+      personal_data: false
+    - from: "the user's question"
+      to: "the rag service (/retrieve) and the answer step (prompt filled with three retrieved chunks, qwen3:1.7b in the local Ollama)"
+      data: "the question text and the retrieved coursework chunks; questions are about coursework, and nothing asks for personal data"
+      personal_data: false
+    - from: "the answer step (qwen3:1.7b)"
+      to: "the user"
+      data: "a generated answer of one or two sentences with [<document>] citations, or a refusal"
+      personal_data: false
+
+  provider:
+    models:
+      - name: all-minilm:22m
+        digest: 1b226e2802dbb772b5fc32a58f103ca1804ef7501331012de126ab22f67475ef
+        runtime: ollama 0.35.0
+        hosting: local
+      - name: qwen3:1.7b
+        digest: 8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7
+        runtime: ollama 0.35.0
+        hosting: local
+
+  retention:
+    index: "in the rag container's memory only; rebuilt by POST /index and gone when the container stops (no disk, no volume)"
+    traces: "none: Phoenix is not started and nothing records questions or answers; promptfoo runs inside the checker with --no-cache and keep no history in this repository"
+    logs: "Docker's json-file logs of the rag and ollama containers (uvicorn access lines: method, path, status; Ollama request timings, no prompt text), deleted with the containers by docker compose down"
+
+  risk:
+    classification: limited
+    reasoning: >-
+      The assistant is an AI system in the sense of AI Act Art. 3(1): a machine-based system that infers from its
+      input (a question and retrieved passages) how to generate output (a text answer). I am its provider in the
+      sense of AI Act Art. 3(3) (I developed it and would put it into service under my name) and, when I use it,
+      its deployer under AI Act Art. 3(4). It uses none of the practices of AI Act Art. 5. It is not high-risk:
+      it is not a safety component of a product under AI Act Art. 6(1), and of the education area of AI Act
+      Annex III (point 3) it does none of the four uses - it does not decide admission, evaluate learning
+      outcomes, assess the level of education or monitor students during tests; its purpose excludes grading, so
+      AI Act Art. 6(2) does not catch it. Annex III obligations would in any case apply only from 2 December 2027
+      (AI Act Art. 113). What remains is transparency: it is intended to interact directly with natural persons,
+      so AI Act Art. 50(1) requires that its users are told they are talking to an AI system (the answer step's
+      output is plainly a generated answer with citations, and DEFENSE.md says so), and it generates text, so the
+      marking duty of AI Act Art. 50(2) would bind it if it were placed on the market; Art. 50 applies since
+      2 August 2026 (AI Act Art. 113). That is why I classify it as limited rather than minimal. As long as it
+      stays a course project that is never placed on the market or put into service, AI Act Art. 2(8) keeps it
+      outside most of the regulation, and AI Act Art. 4 asks providers and deployers to take measures to support
+      the development of AI literacy, which this lab is. No personal data is processed, so the GDPR's Art. 6 is
+      not engaged by the corpus.
+    citations:
+      - "AI Act Art. 3(1)"
+      - "AI Act Art. 3(3)"
+      - "AI Act Art. 3(4)"
+      - "AI Act Art. 2(8)"
+      - "AI Act Art. 4"
+      - "AI Act Art. 5"
+      - "AI Act Art. 6(1)"
+      - "AI Act Art. 6(2)"
+      - "AI Act Annex III"
+      - "AI Act Art. 50(1)"
+      - "AI Act Art. 50(2)"
+      - "AI Act Art. 113"
+      - "GDPR Art. 6"
+
+  evaluation:
+    golden_set: golden-set.jsonl
+    recall_at_3: 0.9808
+    suite: promptfoo.yaml
+    pass_rate: 0.94
+
+  changes_since:
+    # My Lab 4 postmortem's Action Items table has "none" in every Bug cell (Lab 4's I-20 asked for the column, not
+    # for ids), so the only Bug value A-23 can match is "none"; the row is named in the summary.
+    - action_item: none
+      commit: fd450d7532b87bf56cb403d6f8f08c44093becfc
+      summary: "Action Items row 4 of postmortem.md (Add a recommendation memory-growth alert to chat; Bug: none): prometheus/demo-alerts.yml gains RecommendationMemoryGrowth: deriv of recommendation's RSS over 10 minutes above 5 kB/s for 5 minutes, P3 to chat - the growth the cache-failure flag caused (73.0 to 76.0 MB) and no rule saw"

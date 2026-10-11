@@ -1,0 +1,4 @@
+# ai-generated: 0% - the course's file, unchanged
+fastapi==0.142.2
+uvicorn==0.54.0
+pyyaml==6.0.3

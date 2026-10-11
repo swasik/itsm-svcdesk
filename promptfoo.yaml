@@ -1,0 +1,129 @@
+# ai-generated: 40% - the provider block, the judge block and the shapes are the course's template (unchanged); the student chose every question and fact from where /retrieve and `itsmlab answer 8 --regression` showed it sits, with Claude Code (Opus 5.5) as the student; see DEFENSE.md, Suite
+# promptfoo.yaml - the suite (AI-SPEC.md A-11 to A-15). Design: every answerable test asserts a fact that sits in
+# exactly one chunk, past the chunk's first quarter, in the document that ranks first, AND the whole bracketed
+# citation of that document; three unanswerable tests assert the prompt's own refusal words.
+#   no-context, skip-top, truncated -> the fact is gone      no-names, default-prompt -> the citation is gone
+
+description: "Lab 8 suite over my semester's corpus (rag/corpus.yaml): facts plus [<doc>] citations, and refusals"
+
+prompts:
+  - file://prompts/answer.txt
+
+providers:                                        # A-11: the course's answer step, exactly this block
+  - id: http
+    config:
+      url: "{{env.ANSWER_URL}}"
+      method: POST
+      body:
+        question: "{{question}}"
+        prompt: "{{prompt}}"
+      transformResponse: json.answer
+
+defaultTest:
+  options:
+    provider:                                     # the judge of model-graded assertions (none used: see DEFENSE.md)
+      id: ollama:chat:qwen3:1.7b
+      config:
+        think: false
+        temperature: 0
+
+tests:
+  # ---- Lab 1 ----
+  - description: "L1-owner: the C2 decision's service owner, from DECISIONS.md"
+    vars: {question: "Who is the service owner of the decision on closed tickets and reopening?"}
+    assert:
+      - {type: icontains, value: "Incident Manager"}
+      - {type: icontains, value: "[DECISIONS.md]"}
+  - description: "L1-clock: the status code for a malformed X-Test-Clock, from the spec"
+    vars: {question: "What status code does svcdesk return when the X-Test-Clock header does not parse?"}
+    assert:
+      - {type: regex, value: "\\b400\\b"}
+      - {type: icontains, value: "[specs/spec.md]"}
+  - description: "L1-friday: the rejected alternative's due time for a Friday-evening P1"
+    vars: {question: "Under the rejected alternative, when would a P1 raised on Friday at 17:00 be due for acknowledgement?"}
+    assert:
+      - {type: icontains, value: "08:15"}
+      - {type: icontains, value: "[DECISIONS.md]"}
+  # ---- Lab 2 ----
+  - description: "L2-skew: how late the clock-skewed commits were"
+    vars: {question: "By how much were the clock-skewed commits later than the deployment that shipped them?"}
+    assert:
+      - {type: icontains-any, value: ["thirty seconds", "30 seconds", "30 s"]}
+      - {type: icontains-any, value: ["fifteen minutes", "15 minutes", "15 min"]}
+      - {type: icontains, value: "[EDGE-CASES.md]"}
+  # ---- Lab 3 ----
+  - description: "L3-budget: the availability error budget in minutes"
+    vars: {question: "What is the availability error budget of the /kb/search SLO in minutes?"}
+    assert:
+      - {type: icontains, value: "201.6"}
+      - {type: icontains, value: "[slo.md]"}
+  - description: "L3-p99: the measured p99 and p99.9, each tied to its name"
+    vars: {question: "What p99 and p99.9 latency did the measurement of /kb/search show?"}
+    assert:
+      - {type: regex, value: "p99\\D{0,30}236"}
+      - {type: regex, value: "p99\\.9\\D{0,30}265"}
+      - {type: icontains, value: "[slo.md]"}
+  - description: "L3-ladder: how many boundaries the bucket ladder has"
+    vars: {question: "How many boundaries does the latency histogram's bucket ladder have?"}
+    assert:
+      - {type: regex, value: "\\b23\\b"}
+      - {type: icontains, value: "[slo.md]"}
+  # ---- Lab 4 ----
+  - description: "L4-rss: the recommendation service's memory, before and after"
+    vars: {question: "How much did the recommendation service's resident memory grow during the incident?"}
+    assert:
+      - {type: icontains, value: "73.0"}
+      - {type: icontains, value: "76.0"}
+      - {type: icontains, value: "[postmortem.md]"}
+  - description: "L4-mtta: the incident's MTTA"
+    vars: {question: "What was the MTTA of the checkout incident?"}
+    assert:
+      - {type: icontains-any, value: ["17 s", "17 seconds"]}
+      - {type: icontains, value: "[postmortem.md]"}
+  # ---- Lab 5 ----
+  - description: "L5-semgrep: Semgrep's precision and recall, each tied to its name"
+    vars: {question: "What precision and recall did Semgrep reach in the bake-off?"}
+    assert:
+      - {type: regex, value: "[Pp]recision\\D{0,20}0\\.8"}
+      - {type: regex, value: "[Rr]ecall\\D{0,20}0\\.4"}
+      - {type: icontains, value: "[TRIAGE.md]"}
+  # ---- Lab 6 ----
+  - description: "L6-375: how long 150 searches take at a 1 % step"
+    vars: {question: "How long would the gate's 150 searches take at a first step of 1 %?"}
+    assert:
+      - {type: icontains-any, value: ["375 s", "375 seconds"]}
+      - {type: icontains, value: "[corpus/checkpoint/lab6/BLAST-RADIUS.md]"}
+  - description: "L6-promote: how long a release with the shadow takes to promote"
+    vars: {question: "How long did a release with the shadow take to promote an honest candidate?"}
+    assert:
+      - {type: regex, value: "88\\D{1,6}92"}
+      - {type: icontains, value: "[corpus/checkpoint/lab6/BLAST-RADIUS.md]"}
+  # ---- Lab 7 ----
+  - description: "L7-stress: how long the cassandra-stress run took"
+    vars: {question: "How long did the cassandra-stress run take from docker run to exit?"}
+    assert:
+      - {type: icontains-any, value: ["39 s", "39 seconds"]}
+      - {type: icontains, value: "[EVIDENCE.md]"}
+  - description: "L7-repo-buckets: the bucket count of events_by_repo"
+    vars: {question: "How many buckets does the events_by_repo table use?"}
+    assert:
+      - {type: regex, value: "\\b3\\b"}
+      - {type: icontains, value: "[EVIDENCE.md]"}
+  - description: "L7-bytes: the hot partition's size per row"
+    vars: {question: "About how many bytes per row did the instructor's hot partition take?"}
+    assert:
+      - {type: icontains, value: "66"}
+      - {type: icontains, value: "[EVIDENCE.md]"}
+  # ---- unanswerable: the prompt's own refusal (rule 4), not promptfoo's is-refusal ----
+  - description: "U-bill: nothing in the corpus says what hosting cost"
+    vars: {question: "What was svcdesk's cloud hosting bill in October 2026?"}
+    assert:
+      - {type: icontains-any, value: ["don't know", "do not know", "excerpts do not say", "does not say", "not mentioned", "not provided"]}
+  - description: "U-cloud: no cloud provider anywhere in the corpus"
+    vars: {question: "Which cloud provider hosts the svcdesk production database?"}
+    assert:
+      - {type: icontains-any, value: ["don't know", "do not know", "excerpts do not say", "does not say", "not mentioned", "not provided"]}
+  - description: "U-students: the corpus holds no course statistics"
+    vars: {question: "How many students passed the course in 2025?"}
+    assert:
+      - {type: icontains-any, value: ["don't know", "do not know", "excerpts do not say", "does not say", "not mentioned", "not provided"]}
