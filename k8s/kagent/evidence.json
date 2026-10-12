@@ -90,8 +90,7 @@
                         "type": "Accepted"
                     }
                 ],
-                "observedGeneration": 1,
-                "secretHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                "observedGeneration": 1
             }
         },
         {
@@ -129,8 +128,7 @@
                         "type": "Accepted"
                     }
                 ],
-                "observedGeneration": 1,
-                "secretHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                "observedGeneration": 1
             }
         }
     ],

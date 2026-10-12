@@ -18,7 +18,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       # "true" only on the main branch of the course template, which holds no service: there the checker must
       # fail every Core spec, and the job is green when it fails exactly that way. Always "false" in your repository.

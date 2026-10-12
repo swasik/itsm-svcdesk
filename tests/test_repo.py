@@ -174,6 +174,9 @@ def test_no_em_dashes_anywhere():
             continue
         if path.relative_to(ROOT).as_posix() in COURSE_FILES:
             continue
+        # an AI investigator's transcript is the model's verbatim output (Lab 4 I-23), kept as it answered
+        if path.relative_to(ROOT).parts[0] == "ai-rca" and path.name.startswith("transcript"):
+            continue
         if path.suffix in {".py", ".md", ".yml", ".yaml", ".toml", ".sh", ".txt", ".cfg", ".ini", ""} or path.name == "Dockerfile":
             try:
                 text = path.read_text(encoding="utf-8")
