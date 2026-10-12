@@ -1,5 +1,5 @@
 # itsmlab.yaml - read by the checker (itsmlab) and by the wrappers itsmlab.sh / itsmlab.ps1.
-lab: 4                                   # the lab this repository is currently submitting
+lab: 8                                   # the lab this repository is currently submitting
 baselines: {lab1: student, lab2: student, lab3: student, lab4: student, lab5: student, lab6: student, lab7: student}
                                          # Lab 8: every earlier lab is receipted, so the corpus is my own documents at
                                          # the accepted commits (A-03): lab1/v3, lab2/v2, lab3/v2, lab4/v1, lab5/v1, lab6/v1, lab7/v1

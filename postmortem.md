@@ -1,14 +1,14 @@
 ---
 lab4_postmortem:
-  ticket: "50ceffde-fa49-40b3-b4ca-957734d74bf7"
-  detecting_alert: ShopCheckoutErrors
-  onset: 2026-10-12T06:36:23Z
-  detection: 2026-10-12T06:39:19Z
-  acknowledgement: 2026-10-12T06:40:09Z
-  recovery: 2026-10-12T06:44:19Z
-  mttd_seconds: 176
-  mtta_seconds: 50
-  mttr_seconds: 476
+  ticket: "23b2e067-02e9-441b-8f1c-4ce22042bd54"
+  detecting_alert: ServiceLatencyRaised
+  onset: 2026-10-11T07:55:26Z
+  detection: 2026-10-11T07:58:38Z
+  acknowledgement: 2026-10-11T07:59:57Z
+  recovery: 2026-10-11T08:05:38Z
+  mttd_seconds: 192
+  mtta_seconds: 79
+  mttr_seconds: 612
   identified_flags: [productCatalogFailure, productCatalogLockContention, recommendationCacheFailure]
 ---
 <!-- ai-generated: 100% - Claude Code (Opus 5.5) worked the incident as the student and wrote this postmortem from its own notes and queries -->
